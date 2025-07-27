@@ -32,12 +32,23 @@ namespace BedrockLauncher.Core
             }
             
         }
-
-        public void OpenWindowsDevelopment()
+        /// <summary>
+        /// 开启Windows开发者模式
+        /// </summary>
+        public bool OpenWindowsDevelopment()
         {
-            var AppModelUnlock = Registry.LocalMachine.OpenSubKey(
-                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock", true);
-            AppModelUnlock.SetValue("AllowDevelopmentWithoutDevLicense",1);
+            try
+            {
+                var AppModelUnlock = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock", true);
+                AppModelUnlock.SetValue("AllowDevelopmentWithoutDevLicense", 1);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+          
         }
         /// <summary>
         /// 获取Windows开发者模式状态
