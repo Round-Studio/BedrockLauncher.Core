@@ -44,6 +44,7 @@
 
             // 检查服务器是否支持断点续传和获取文件大小
             await CheckServerCapabilities(url);
+            Console.WriteLine(url);
 
             if (_taskInfo.TotalSize > 0 && _supportsRangeRequests)
             {
@@ -53,7 +54,7 @@
             else
             {
                 // 不支持多线程，使用单线程下载
-                await StartSingleThreadDownload();
+                await StartMultiThreadDownload();
             }
 
             return true;

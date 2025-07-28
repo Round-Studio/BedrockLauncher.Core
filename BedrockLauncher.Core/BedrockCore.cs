@@ -21,9 +21,9 @@ namespace BedrockLauncher.Core
 {
     public class BedrockCore
     {
-        public CoreOptions options { get; set; }
-        public HttpClient client { get; set; }
-        public MultiThreadDownloader downloader { get; set; }
+        public CoreOptions Options { get; set; }
+        public HttpClient Client { get; set; }
+        public MultiThreadDownloader Downloader { get; set; }
 
 
         public BedrockCore()
@@ -33,32 +33,32 @@ namespace BedrockLauncher.Core
                 throw new Exception("仅支持Windows平台");
             }
 
-            client = new HttpClient();
-            downloader = new MultiThreadDownloader();
+            Client = new HttpClient();
+            Downloader = new MultiThreadDownloader();
         }
         /// <summary>
         /// 初始化
         /// </summary>
         public void Init()
         {
-            if (options == null)
+            if (Options == null)
             {
-                options = new CoreOptions();
+                Options = new CoreOptions();
             }
 
-            if (options.autoOpenWindowsDevelopment || !GetWindowsDevelopmentState())
+            if (Options.autoOpenWindowsDevelopment || !GetWindowsDevelopmentState())
             {
                 OpenWindowsDevelopment();
             }
 
-            if (options.autoCompleteVC)
+            if (Options.autoCompleteVC)
             {
                 CompleteFrameWorkHelper.CompleteVC();
             }
 
-            if (!Directory.Exists(options.localDir))
+            if (!Directory.Exists(Options.localDir))
             {
-                Directory.CreateDirectory(options.localDir);
+                Directory.CreateDirectory(Options.localDir);
             }
         }
 
@@ -107,20 +107,20 @@ namespace BedrockLauncher.Core
         /// <returns></returns>
         public bool InstallVersion(VersionInformation information,string install_dir,Action<string,uint> process_percent,Action<AsyncStatus,Exception> result_callback)
         {
-            if (!Directory.Exists(options.localDir))
+            if (!Directory.Exists(Options.localDir))
             {
-                Directory.CreateDirectory(options.localDir);
+                Directory.CreateDirectory(Options.localDir);
             }
 
-            var savePath = Path.Combine(options.localDir, install_dir+".appx");
-            var result = downloader.DownloadAsync(VersionHelper.GetUri(client, information.Variations[0].UpdateIds[0].ToString()),
+            var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
+            var result = Downloader.DownloadAsync(VersionHelper.GetUri(Client, information.Variations[0].UpdateIds[0].ToString()),
                 savePath).Result;
             if (result != true)
             {
                 return false;
             }
             
-            var destinationDirectoryName = Path.Combine(options.localDir, install_dir);
+            var destinationDirectoryName = Path.Combine(Options.localDir, install_dir);
             ZipFile.ExtractToDirectory(savePath,destinationDirectoryName);
             File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
             ManifestEditor.EditManifest(destinationDirectoryName);

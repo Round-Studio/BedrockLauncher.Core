@@ -17,7 +17,7 @@ namespace BedrockLauncher.Core.Native
         {
             int ActivateApplication([MarshalAs(UnmanagedType.LPWStr)] string appUserModelId,
                 [MarshalAs(UnmanagedType.LPWStr)] string arguments,
-                int options, out uint processId);
+                int Options, out uint processId);
         }
 
         /// <summary>

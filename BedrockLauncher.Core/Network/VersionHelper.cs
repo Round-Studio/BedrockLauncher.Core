@@ -15,15 +15,15 @@ namespace BedrockLauncher.Core.Network
 {
     public struct MsStoreUri
     {
-        public static Uri cookieUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
-        public static Uri fileListXmlUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
-        public static Uri updateUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx/secured");
+        public static Uri cookieUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/Client.asmx");
+        public static Uri fileListXmlUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/Client.asmx");
+        public static Uri updateUri = new("https://fe3.delivery.mp.microsoft.com/ClientWebService/Client.asmx/secured");
         public static Uri productUri = new("https://storeedgefd.dsx.mp.microsoft.com/v9.0/products/9NBLGGH2JHXJ?market=US&locale=en-US&deviceFamily=Windows.Desktop");
     }
 
     public static class VersionHelper
     {
-        public static string GetUri(HttpClient client,string update_id)
+        public static string GetUri(HttpClient Client,string update_id)
         {
             DateTime now = DateTime.UtcNow;
             XmlDocument xmlDoc = new XmlDocument();
@@ -41,7 +41,7 @@ namespace BedrockLauncher.Core.Network
             StringContent stxContent = new StringContent(str);
             stxContent.Headers.ContentType = new MediaTypeHeaderValue("application/soap+xml");
             stxContent.Headers.ContentType.CharSet = "utf-8";
-            var postAsync = client.PostAsync(MsStoreUri.updateUri,stxContent).Result;
+            var postAsync = Client.PostAsync(MsStoreUri.updateUri,stxContent).Result;
             if (postAsync.IsSuccessStatusCode)
             {
                 var identifyComplexUrl = IdentifyComplexUrl(postAsync.Content.ReadAsStringAsync().Result);
@@ -82,9 +82,9 @@ namespace BedrockLauncher.Core.Network
             }
         }
 
-        public static List<VersionInformation> GetVersions(HttpClient client,string uri)
+        public static List<VersionInformation> GetVersions(HttpClient Client,string uri)
         {
-            var result = client.GetStringAsync(uri).Result;
+            var result = Client.GetStringAsync(uri).Result;
             List<VersionInformation> versions = new List<VersionInformation>();
             var jsonNode = JsonObject.Parse(result).AsObject();
             foreach (var value in jsonNode)
