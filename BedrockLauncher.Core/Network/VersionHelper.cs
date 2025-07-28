@@ -85,15 +85,19 @@ namespace BedrockLauncher.Core.Network
         public static List<VersionInformation> GetVersions(HttpClient client,string uri)
         {
             var result = client.GetStringAsync(uri).Result;
-            var jsonNode = JsonObject.Parse(result)[0];
-            var jsonArray = jsonNode.AsObject();
             List<VersionInformation> versions = new List<VersionInformation>();
-            foreach (var i in jsonArray)
+            var jsonNode = JsonObject.Parse(result).AsObject();
+            foreach (var value in jsonNode)
             {
-                var versionInformation = JsonSerializer.Deserialize<VersionInformation>(i.Value.ToJsonString());
-                versions.Add(versionInformation);
-                Console.WriteLine(versionInformation.ID);
+                var jsonArray = value.Value.AsObject();
+                foreach (var i in jsonArray)
+                {
+                    var versionInformation = JsonSerializer.Deserialize<VersionInformation>(i.Value.ToJsonString());
+                    versions.Add(versionInformation);
+                    Console.WriteLine(versionInformation.ID);
+                }
             }
+           
             return versions;
         }
     }

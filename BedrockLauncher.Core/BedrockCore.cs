@@ -25,7 +25,6 @@ namespace BedrockLauncher.Core
         public HttpClient client { get; set; }
         public MultiThreadDownloader downloader { get; set; }
 
-        private Lock dLock = new Lock();
 
         public BedrockCore()
         {
@@ -120,6 +119,7 @@ namespace BedrockLauncher.Core
             {
                 return false;
             }
+            
             var destinationDirectoryName = Path.Combine(options.localDir, install_dir);
             ZipFile.ExtractToDirectory(savePath,destinationDirectoryName);
             File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
