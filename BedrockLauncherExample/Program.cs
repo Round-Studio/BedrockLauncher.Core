@@ -23,7 +23,7 @@ namespace BedrockLauncherExample
                 options.autoOpenWindowsDevelopment = true;
                 options.localDir = Path.Combine(Directory.GetCurrentDirectory(), "Versions");
                 bedrockCore.options = options;
-                var versionInformations = VersionHelper.GetVersions(bedrockCore.client, "https://data.mcappx.com/v1/bedrock.json");
+                var versionInformations = VersionHelper.GetVersions(bedrockCore.client, "https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
                 int i = 0;
                 versionInformations.ForEach((a) =>
                 {

@@ -101,6 +101,7 @@ namespace BedrockLauncher.Core
         /// 安装MC
         /// </summary>
         /// <param name="information">版本信息</param>
+        /// <param name="downloadProgress">下载进度</param>
         /// <param name="install_dir">安装目录名称</param>
         /// <param name="process_percent">安装进度</param>
         /// <param name="result_callback">结果callback</param>
