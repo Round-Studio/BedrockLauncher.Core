@@ -13,7 +13,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
     /// </summary>
     /// <param name="maxConcurrency">最大并发下载线程数。</param>
     /// <param name="bufferSize">每次读写操作的缓冲区大小。</param>
-    public ImprovedFlexibleMultiThreadDownloader(int maxConcurrency = 4, int bufferSize = 81920)
+    public ImprovedFlexibleMultiThreadDownloader(int maxConcurrency = 16, int bufferSize = 1024)
     {
         var handler = new HttpClientHandler
         {
