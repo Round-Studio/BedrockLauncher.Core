@@ -84,6 +84,7 @@ namespace BedrockLauncher.Core.Network
 
         public static List<VersionInformation> GetVersions(HttpClient client,string uri)
         {
+            
             var result = client.GetStringAsync(uri).Result;
             List<VersionInformation> versions = new List<VersionInformation>();
             var jsonNode = JsonObject.Parse(result).AsObject();
@@ -97,7 +98,6 @@ namespace BedrockLauncher.Core.Network
                     Console.WriteLine(versionInformation.ID);
                 }
             }
-           
             return versions;
         }
     }

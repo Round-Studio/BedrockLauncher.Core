@@ -23,7 +23,7 @@ namespace BedrockLauncher.Core
     {
         public CoreOptions options { get; set; }
         public HttpClient client { get; set; }
-        public MultiThreadDownloader downloader { get; set; }
+        public ImprovedFlexibleMultiThreadDownloader downloader { get; set; }
 
 
         public BedrockCore()
@@ -34,7 +34,7 @@ namespace BedrockLauncher.Core
             }
 
             client = new HttpClient();
-            downloader = new MultiThreadDownloader();
+            downloader = new ImprovedFlexibleMultiThreadDownloader();
         }
         /// <summary>
         /// 初始化
@@ -105,44 +105,54 @@ namespace BedrockLauncher.Core
         /// <param name="process_percent">安装进度</param>
         /// <param name="result_callback">结果callback</param>
         /// <returns></returns>
-        public bool InstallVersion(VersionInformation information,string install_dir,Action<string,uint> process_percent,Action<AsyncStatus,Exception> result_callback)
+        public bool InstallVersion(VersionInformation information,string install_dir,Progress<DownloadProgress> downloadProgress,Action<string,uint> process_percent,Action<AsyncStatus,Exception> result_callback)
         {
-            if (!Directory.Exists(options.localDir))
+            try
             {
-                Directory.CreateDirectory(options.localDir);
-            }
+                if (!Directory.Exists(options.localDir))
+                {
+                    Directory.CreateDirectory(options.localDir);
+                }
 
-            var savePath = Path.Combine(options.localDir, install_dir+".appx");
-            var result = downloader.DownloadAsync(VersionHelper.GetUri(client, information.Variations[0].UpdateIds[0].ToString()),
-                savePath).Result;
-            if (result != true)
+                var savePath = Path.Combine(options.localDir, install_dir + ".appx");
+                lock (downloader)
+                 downloader.DownloadAsync(VersionHelper.GetUri(client, information.Variations[0].UpdateIds[0].ToString()),
+                    savePath,downloadProgress).Wait();
+
+
+                var destinationDirectoryName = Path.Combine(options.localDir, install_dir);
+
+                ZipFile.ExtractToDirectory(savePath, destinationDirectoryName);
+
+                File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
+
+                ManifestEditor.EditManifest(destinationDirectoryName);
+
+                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+                Native.Native.RegisterAppxAsync(Path.Combine(destinationDirectoryName, "AppxManifest.xml"), (
+                    (progress, deploymentProgress) =>
+                    {
+                        process_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
+                    }), ((progress, status) =>
+                   {
+                    task.SetResult(1);
+                    if (status == AsyncStatus.Error)
+                    {
+                        result_callback(status, new Exception(progress.GetResults().ErrorText));
+                    }
+                    else
+                    {
+                        result_callback(status, null);
+                    }
+                }));
+                task.Task.Wait();
+                return true;
+            }
+            catch
             {
                 return false;
             }
-            
-            var destinationDirectoryName = Path.Combine(options.localDir, install_dir);
-            ZipFile.ExtractToDirectory(savePath,destinationDirectoryName);
-            File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
-            ManifestEditor.EditManifest(destinationDirectoryName);
-            TaskCompletionSource<int> task = new TaskCompletionSource<int>();
-            Native.Native.RegisterAppxAsync(Path.Combine(destinationDirectoryName, "AppxManifest.xml"),(
-                (progress, deploymentProgress) =>
-                {
-                    process_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
-                }),((progress, status) =>
-               {
-                task.SetResult(1);
-                if (status == AsyncStatus.Error)
-                {
-                    result_callback(status, new Exception(progress.GetResults().ErrorText));
-                }
-                else
-                {
-                    result_callback(status, null);
-                }
-               }));
-            task.Task.Wait();
-            return true;
+           
         }
 
         /// <summary>

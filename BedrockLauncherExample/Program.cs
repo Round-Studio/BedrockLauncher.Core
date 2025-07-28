@@ -1,12 +1,14 @@
 ﻿using BedrockLauncher.Core;
 using BedrockLauncher.Core.CoreOption;
-using BedrockLauncher.Core.FrameworkComplete;
 using BedrockLauncher.Core.Native;
 using BedrockLauncher.Core.Network;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using Windows.Foundation;
+using BedrockLauncher.Core.FrameworkComplete;
+
 namespace BedrockLauncherExample
 {
     internal class Program
@@ -22,7 +24,6 @@ namespace BedrockLauncherExample
                 options.localDir = Path.Combine(Directory.GetCurrentDirectory(), "Versions");
                 bedrockCore.options = options;
                 var versionInformations = VersionHelper.GetVersions(bedrockCore.client, "https://data.mcappx.com/v1/bedrock.json");
-
                 int i = 0;
                 versionInformations.ForEach((a) =>
                 {
@@ -32,10 +33,19 @@ namespace BedrockLauncherExample
 
                 var readLine = Console.ReadLine();
                 var i1 = int.Parse(readLine);
-                bedrockCore.downloader.ProgressChanged += Downloader_ProgressChanged;
-                bedrockCore.downloader.DownloadCompleted += Downloader_DownloadCompleted;
                 bedrockCore.Init();
-                var b = bedrockCore.InstallVersion(versionInformations[i1], versionInformations[i1].ID, ((s, u) =>
+                var b = bedrockCore.InstallVersion(versionInformations[i1], versionInformations[i1].ID, (new Progress<DownloadProgress>((
+                        p =>
+                        {
+                            if (p.TotalBytes > 0)
+                            {
+                                Console.Write($"\r下载进度: {p.ProgressPercentage:F2}% ({p.DownloadedBytes / (1024.0 * 1024):F2} MB / {p.TotalBytes / (1024.0 * 1024):F2} MB)");
+                            }
+                            else
+                            {
+                                Console.Write($"\r已下载: {p.DownloadedBytes / (1024.0 * 1024):F2} MB (总大小未知)");
+                            }
+                        }))), ((s, u) =>
                     {
                         Console.WriteLine($"{s} -> {u}");
                     }),
@@ -48,30 +58,10 @@ namespace BedrockLauncherExample
             }
             catch (Exception e)
             {
-                    Console.WriteLine(e);
-                    throw;
+                Console.WriteLine(e);
+                throw;
             }
-           
-            //Wait for complete
-        }
 
-        private static void Downloader_DownloadCompleted(object? sender, DownloadCompletedEventArgs e)
-        {
-           Console.WriteLine("下载完成开始解压");
-        }
-
-        private static void Downloader_ProgressChanged(object? sender, DownloadProgressEventArgs e)
-        {
-            DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(22, 3);
-            defaultInterpolatedStringHandler.AppendLiteral("进度: ");
-            defaultInterpolatedStringHandler.AppendFormatted<double>(e.ProgressPercentage, "F2");
-            defaultInterpolatedStringHandler.AppendLiteral("% ");
-            defaultInterpolatedStringHandler.AppendLiteral("速度: ");
-            defaultInterpolatedStringHandler.AppendFormatted<double>(e.Speed / 1024.0 / 1024.0, "F2");
-            defaultInterpolatedStringHandler.AppendLiteral(" MB/s ");
-            defaultInterpolatedStringHandler.AppendLiteral("剩余时间: ");
-            defaultInterpolatedStringHandler.AppendFormatted<TimeSpan>(e.RemainingTime, "mm\\:ss");
-            Console.Write(defaultInterpolatedStringHandler.ToStringAndClear());
         }
     }
 }

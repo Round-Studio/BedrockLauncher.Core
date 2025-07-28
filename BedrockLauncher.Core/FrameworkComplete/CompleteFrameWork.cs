@@ -24,7 +24,7 @@ namespace BedrockLauncher.Core.FrameworkComplete
         /// <exception cref="Exception"></exception>
         public static void CompleteVC()
         {
-            var multiThreadDownloader = new MultiThreadDownloader();
+            var multiThreadDownloader = new ImprovedFlexibleMultiThreadDownloader();
             var packageManager = new PackageManager();
 
             void AddAppx()
@@ -42,20 +42,24 @@ namespace BedrockLauncher.Core.FrameworkComplete
                     }
                     Console.WriteLine(status);
                 }));
+
                 task.Task.Wait();
             }
 
             void DownLoad(string uri)
             {
-                var r = multiThreadDownloader.DownloadAsync(uri, ".\\VCUwp.appx").Result;
-                if (r != true)
+                try
                 {
+                    multiThreadDownloader.DownloadAsync(uri, ".\\VCUwp.appx").Wait();
                     multiThreadDownloader.Dispose();
+                    AddAppx();
+                    File.Delete(".\\VCUwp.appx");
+                }
+                catch
+                {
                     throw new Exception("下载错误");
                 }
-                multiThreadDownloader.Dispose();
-                AddAppx();
-                File.Delete(".\\VCUwp.appx");
+               
             }
 
             bool hasVC = false;
