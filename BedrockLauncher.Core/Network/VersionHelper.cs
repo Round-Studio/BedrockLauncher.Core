@@ -23,7 +23,7 @@ namespace BedrockLauncher.Core.Network
 
     public static class VersionHelper
     {
-        public static void GetUri(HttpClient client,string update_id)
+        public static string GetUri(HttpClient client,string update_id)
         {
             DateTime now = DateTime.UtcNow;
             XmlDocument xmlDoc = new XmlDocument();
@@ -45,9 +45,10 @@ namespace BedrockLauncher.Core.Network
             if (postAsync.IsSuccessStatusCode)
             {
                 var identifyComplexUrl = IdentifyComplexUrl(postAsync.Content.ReadAsStringAsync().Result);
-                Console.WriteLine(identifyComplexUrl);
+               return identifyComplexUrl;
             }
 
+            return null;
         }
         private static string IdentifyComplexUrl(string soapResponse)
         {

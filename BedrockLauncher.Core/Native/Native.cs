@@ -11,6 +11,15 @@ namespace BedrockLauncher.Core.Native
 {
     public static class Native
     {
+        [ComImport, Guid("2E941141-7F97-4756-BA1D-9DECDE894A3D")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+      public interface IApplicationActivationManager
+        {
+            int ActivateApplication([MarshalAs(UnmanagedType.LPWStr)] string appUserModelId,
+                [MarshalAs(UnmanagedType.LPWStr)] string arguments,
+                int options, out uint processId);
+        }
+
         /// <summary>
         /// 异步注册appx 请使用TaskCompletionSource进行等待
         /// </summary>

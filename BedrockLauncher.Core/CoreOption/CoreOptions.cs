@@ -15,7 +15,7 @@ namespace BedrockLauncher.Core.CoreOption
         /// <summary>
         /// 安装文件夹
         /// </summary>
-        public string localDir { get; set; } = "./";
+        public string localDir { get; set; } = Directory.GetCurrentDirectory();
         /// <summary>
         /// 自动补全VC UWP运行库
         /// </summary>

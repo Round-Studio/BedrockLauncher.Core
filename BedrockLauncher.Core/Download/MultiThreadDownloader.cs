@@ -543,6 +543,21 @@
         {
             _taskInfo.Status = DownloadStatus.Paused;
         }
+        // 清理临时文件
+        foreach (var chunk in _chunks)
+        {
+            if (File.Exists(chunk.TempFilePath))
+            {
+                try
+                {
+                    File.Delete(chunk.TempFilePath);
+                }
+                catch
+                {
+                    // 忽略删除失败
+                }
+            }
+        }
     }
 
     public void Cancel()

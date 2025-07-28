@@ -23,7 +23,7 @@ namespace BedrockLauncher.Core.JsonHandle
     /// <summary>
     /// 各系统架构变体信息列表
     /// </summary>
-    public List<VersionDetils> Detils { get; set; }
+    public List<VersionDetils> Variations { get; set; }
     }
     public class VersionDetils
     {
