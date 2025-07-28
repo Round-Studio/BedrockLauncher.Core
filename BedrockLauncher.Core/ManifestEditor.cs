@@ -19,7 +19,6 @@ namespace BedrockLauncher.Core
         {
             if (string.IsNullOrEmpty(directory))
                 throw new ArgumentNullException(nameof(directory));
-
             string manifestPath = Path.Combine(directory, "AppxManifest.xml");
             if (!File.Exists(manifestPath))
                 return false;

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using BedrockLauncher.Core.JsonHandle;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -76,6 +79,21 @@ namespace BedrockLauncher.Core.Network
             {
                 throw;
             }
+        }
+
+        public static List<VersionInformation> GetVersions(HttpClient client,string uri)
+        {
+            var result = client.GetStringAsync(uri).Result;
+            var jsonNode = JsonObject.Parse(result)[0];
+            var jsonArray = jsonNode.AsObject();
+            List<VersionInformation> versions = new List<VersionInformation>();
+            foreach (var i in jsonArray)
+            {
+                var versionInformation = JsonSerializer.Deserialize<VersionInformation>(i.Value.ToJsonString());
+                versions.Add(versionInformation);
+                Console.WriteLine(versionInformation.ID);
+            }
+            return versions;
         }
     }
 }

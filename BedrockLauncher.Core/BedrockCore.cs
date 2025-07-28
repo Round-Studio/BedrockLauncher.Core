@@ -5,12 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BedrockLauncher.Core.FrameworkComplete;
 
 namespace BedrockLauncher.Core
 {
     public class BedrockCore
     {
-        public CoreOptions options { get;set; }
+        public CoreOptions options { get; set; }
+
         public BedrockCore()
         {
             if (!OperatingSystem.IsWindows())
@@ -30,8 +32,13 @@ namespace BedrockLauncher.Core
             {
                 OpenWindowsDevelopment();
             }
-            
+
+            if (options.autoCompleteVC)
+            {
+                CompleteFrameWorkHelper.CompleteVC();
+            }
         }
+
         /// <summary>
         /// 开启Windows开发者模式
         /// </summary>
@@ -48,8 +55,9 @@ namespace BedrockLauncher.Core
             {
                 return false;
             }
-          
+
         }
+
         /// <summary>
         /// 获取Windows开发者模式状态
         /// </summary>
@@ -63,7 +71,31 @@ namespace BedrockLauncher.Core
             {
                 return false;
             }
+
             return true;
         }
+
+        public bool InstallVersion()
+        {
+
+            return true;
+        }
+
+        public bool LaunchGame()
+        {
+            return true;
+        }
+
+        public bool StopGame()
+        {
+            return true;
+        }
+
+        public bool RemoveGame()
+        {
+            return true;
+        }
+
+    
     }
 }

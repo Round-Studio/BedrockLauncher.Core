@@ -11,8 +11,13 @@ namespace BedrockLauncher.Core.Native
 {
     public static class Native
     {
-
-        public static void RegisterAppx(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction)
+        /// <summary>
+        /// 异步注册appx 请使用TaskCompletionSource进行等待
+        /// </summary>
+        /// <param name="appxXmlpath"></param>
+        /// <param name="ProgressCallAction"></param>
+        /// <param name="completeAction"></param>
+        public static void RegisterAppxAsync(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction)
         {
             try
             {
@@ -20,9 +25,31 @@ namespace BedrockLauncher.Core.Native
                 var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.DevelopmentMode);
                 asyncOperationWithProgress.Progress += ((info, progressInfo) => ProgressCallAction(info,progressInfo));
                 asyncOperationWithProgress.Completed += ((info, status) => completeAction(info, status));
+             
             }
             catch 
             {
+                throw;
+            }
+        }
+        /// <summary>
+        /// 异步添加框架appx 请使用TaskCompletionSource进行等待
+        /// </summary>
+        /// <param name="appxPath"></param>
+        /// <param name="ProgressCallAction"></param>
+        /// <param name="completeAction"></param>
+        public static void addAppxAsync(string appxPath, Action<IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>, DeploymentProgress> ProgressCallAction, Action<IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>, AsyncStatus> completeAction)
+        {
+            try
+            {
+                var packageManager = new PackageManager();
+                var asyncOperationWithProgress = packageManager.AddPackageAsync(new Uri(appxPath),null,DeploymentOptions.ForceApplicationShutdown);
+                asyncOperationWithProgress.Progress += ((info, progressInfo) => ProgressCallAction(info, progressInfo));
+                asyncOperationWithProgress.Completed += ((info, status) => completeAction(info, status));
+            }
+            catch
+            {
+               
                 throw;
             }
         }
