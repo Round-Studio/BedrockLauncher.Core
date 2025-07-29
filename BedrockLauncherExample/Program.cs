@@ -18,12 +18,10 @@ namespace BedrockLauncherExample
             try
             {
                 var bedrockCore = new BedrockCore();
-                CoreOptions options = new CoreOptions();
-                options.autoCompleteVC = true;
-                options.autoOpenWindowsDevelopment = true;
-                options.localDir = Path.Combine(Directory.GetCurrentDirectory(), "Versions");
-                bedrockCore.Options = options;
-                var versionInformations = VersionHelper.GetVersions(bedrockCore.Client, "https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
+                var coreOptions = new CoreOptions();
+                bedrockCore.Options = coreOptions;
+                bedrockCore.Init();
+                var versionInformations = VersionHelper.GetVersions("https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
                 int i = 0;
                 versionInformations.ForEach((a) =>
                 {
@@ -33,28 +31,48 @@ namespace BedrockLauncherExample
 
                 var readLine = Console.ReadLine();
                 var i1 = int.Parse(readLine);
-                bedrockCore.Init();
-                var b = bedrockCore.InstallVersion(versionInformations[i1], versionInformations[i1].ID, (new Progress<DownloadProgress>((
-                        p =>
+                var cts = new CancellationTokenSource();
+                var keyPressTask = Task.Run(() =>
+                {
+                    ConsoleKeyInfo key;
+                    do
+                    {
+                        key = Console.ReadKey(true); // true 表示不回显按下的键
+                    } while (key.Key != ConsoleKey.C);
+
+                    Console.WriteLine("\n检测到 'C' 键，正在取消下载...");
+                    // 4. 触发取消
+                    cts.Cancel();
+                });
+                InstallCallback callback = new InstallCallback()
+                {
+                    CancellationToken = cts.Token,
+                    downloadProgress = (new Progress<DownloadProgress>((p =>
+                    {
+                        if (p.TotalBytes > 0)
                         {
-                            if (p.TotalBytes > 0)
-                            {
-                                Console.Write($"\r下载进度: {p.ProgressPercentage:F2}% ({p.DownloadedBytes / (1024.0 * 1024):F2} MB / {p.TotalBytes / (1024.0 * 1024):F2} MB)");
-                            }
-                            else
-                            {
-                                Console.Write($"\r已下载: {p.DownloadedBytes / (1024.0 * 1024):F2} MB (总大小未知)");
-                            }
-                        }))), ((s, u) =>
+                            Console.Write($"\r下载进度: {p.ProgressPercentage:F2}% ({p.DownloadedBytes / (1024.0 * 1024):F2} MB / {p.TotalBytes / (1024.0 * 1024):F2} MB)");
+                        }
+                        else
+                        {
+                            Console.Write($"\r已下载: {p.DownloadedBytes / (1024.0 * 1024):F2} MB (总大小未知)");
+                        }
+                    }))),
+                    registerProcess_percent = ((s, u) =>
                     {
-                        Console.WriteLine($"{s} -> {u}");
+
                     }),
-                    ((status, exception) =>
+                    result_callback = ((status, exception) =>
                     {
-                        Console.WriteLine(status);
-                        Console.WriteLine(exception.Message);
-                    }));
-                Console.WriteLine(b);
+
+                    }),
+                    install_states = (states =>
+                    {
+                        Console.WriteLine(states);
+                    })
+                };
+                var information = versionInformations[i1];
+                bedrockCore.InstallVersion(information, information.ID, callback);
             }
             catch (Exception e)
             {

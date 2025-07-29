@@ -22,7 +22,6 @@ namespace BedrockLauncher.Core
     public class BedrockCore
     {
         public CoreOptions Options { get; set; }
-        public HttpClient Client { get; set; }
         public ImprovedFlexibleMultiThreadDownloader Downloader { get; set; }
 
 
@@ -32,7 +31,6 @@ namespace BedrockLauncher.Core
             {
                 throw new Exception("仅支持Windows平台");
             }
-            Client = new HttpClient();
             Downloader = new ImprovedFlexibleMultiThreadDownloader();
         }
         /// <summary>
@@ -105,60 +103,65 @@ namespace BedrockLauncher.Core
         /// <param name="process_percent">安装进度</param>
         /// <param name="result_callback">结果callback</param>
         /// <returns></returns>
-        public bool InstallVersion(VersionInformation information,string install_dir,Progress<DownloadProgress> downloadProgress,Action<string,uint> process_percent,Action<AsyncStatus,Exception> result_callback)
+        public bool InstallVersion(VersionInformation information,string install_dir,InstallCallback callback)
         {
-            RemoveGame(information.Type switch
-            {
-                "Release" => VersionType.Release,
-                "Beta" => VersionType.Beta,
-                "Preview" => VersionType.Preview,
-                _ => VersionType.Release
-            });
+           
             var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
             try
             {
+
                 if (!Directory.Exists(Options.localDir))
                 {
                     Directory.CreateDirectory(Options.localDir);
                 }
 
+                callback.install_states(InstallStates.getingDownloadUri);
+                var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
                 lock (Downloader)
-                    Downloader.DownloadAsync(
-                        VersionHelper.GetUri(Client, information.Variations[0].UpdateIds[0].ToString()),
-                        savePath, downloadProgress).Wait();
+                {
+                    callback.install_states(InstallStates.downloading);
+                    var result = Downloader.DownloadAsync(
+                        uri,
+                        savePath, callback.downloadProgress,callback.CancellationToken).Result;
+                    if (result != true)
+                    {
+                        return false;
+                    }
+                }
 
 
                 var destinationDirectoryName = Path.Combine(Options.localDir, install_dir);
-
-                ZipFile.ExtractToDirectory(savePath, destinationDirectoryName);
+                callback.install_states(InstallStates.unzipng);
+                ZipFile.ExtractToDirectory(savePath, destinationDirectoryName,true);
 
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
 
                 ManifestEditor.EditManifest(destinationDirectoryName);
 
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+                callback.install_states(InstallStates.registering);
                 Native.Native.RegisterAppxAsync(Path.Combine(destinationDirectoryName, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
-                        process_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
+                      callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
                     }), ((progress, status) =>
                 {
                     task.SetResult(1);
                     if (status == AsyncStatus.Error)
                     {
-                        result_callback(status, new Exception(progress.GetResults().ErrorText));
+                        callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
                     }
                     else
                     {
-                        result_callback(status, null);
+                        callback.result_callback(status, null);
                     }
                 }));
                 task.Task.Wait();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+               throw;
             }
             finally
             {
@@ -176,7 +179,6 @@ namespace BedrockLauncher.Core
         /// <returns></returns>
         public bool LaunchGame(VersionType type)
         {
-           
             var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(type switch {
                 VersionType.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
                 VersionType.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
@@ -216,7 +218,7 @@ namespace BedrockLauncher.Core
             {
                 var packageManager = new PackageManager();
                 var packages = packageManager.FindPackagesForUser("");
-
+                
                 foreach (var package in packages)
                 {
                     if (package.Id.FamilyName == type switch
@@ -226,6 +228,7 @@ namespace BedrockLauncher.Core
                             VersionType.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
                         })
                     {
+                        
                         packageManager.RemovePackageAsync(
                             package.Id.FullName,
                             RemovalOptions.PreserveApplicationData).AsTask().Wait();
