@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using BedrockLauncher.Core.Native;
 
 namespace BedrockLauncher.Core
 {
@@ -26,6 +27,8 @@ namespace BedrockLauncher.Core
         /// 结果返回
         /// </summary>
         public required Action<AsyncStatus, Exception> result_callback { get; set; }
+
+        public required Progress<ZipProgress> zipProgress { get; set; }
         /// <summary>
         /// 安装状态
         /// </summary>

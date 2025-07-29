@@ -15,6 +15,7 @@ using Windows.Foundation;
 using Windows.Management.Deployment;
 using Windows.Storage;
 using Windows.System;
+using BedrockLauncher.Core.Native;
 using static BedrockLauncher.Core.Native.Native;
 
 namespace BedrockLauncher.Core
@@ -117,12 +118,14 @@ namespace BedrockLauncher.Core
 
                 callback.install_states(InstallStates.getingDownloadUri);
                 var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
+                callback.install_states(InstallStates.gotDownloadUri);
                 lock (Downloader)
                 {
                     callback.install_states(InstallStates.downloading);
                     var result = Downloader.DownloadAsync(
                         uri,
                         savePath, callback.downloadProgress,callback.CancellationToken).Result;
+                    callback.install_states(InstallStates.downloaded);
                     if (result != true)
                     {
                         return false;
@@ -132,8 +135,9 @@ namespace BedrockLauncher.Core
 
                 var destinationDirectoryName = Path.Combine(Options.localDir, install_dir);
                 callback.install_states(InstallStates.unzipng);
-                ZipFile.ExtractToDirectory(savePath, destinationDirectoryName,true);
-
+                ZipExtractor.ExtractWithProgress(savePath,destinationDirectoryName,callback.zipProgress);
+                //ZipFile.ExtractToDirectory(savePath, destinationDirectoryName,true);
+                callback.install_states(InstallStates.unziped);
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
 
                 ManifestEditor.EditManifest(destinationDirectoryName);
@@ -157,6 +161,7 @@ namespace BedrockLauncher.Core
                     }
                 }));
                 task.Task.Wait();
+                callback.install_states(InstallStates.registered);
                 return true;
             }
             catch (Exception ex)

@@ -46,6 +46,10 @@ namespace BedrockLauncherExample
                 });
                 InstallCallback callback = new InstallCallback()
                 {
+                    zipProgress = new Progress<ZipProgress>((progress =>
+                    {
+                        Console.WriteLine(progress.ToString());
+                    })),
                     CancellationToken = cts.Token,
                     downloadProgress = (new Progress<DownloadProgress>((p =>
                     {

@@ -19,9 +19,12 @@ namespace BedrockLauncher.Core
     public enum InstallStates
     {
         downloading,
-        marging,
+        downloaded,
         getingDownloadUri,
+        gotDownloadUri,
         unzipng,
+        unziped,
         registering,
+        registered
     }
 }
