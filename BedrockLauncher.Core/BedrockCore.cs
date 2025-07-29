@@ -107,6 +107,14 @@ namespace BedrockLauncher.Core
         /// <returns></returns>
         public bool InstallVersion(VersionInformation information,string install_dir,Progress<DownloadProgress> downloadProgress,Action<string,uint> process_percent,Action<AsyncStatus,Exception> result_callback)
         {
+            RemoveGame(information.Type switch
+            {
+                "Release" => VersionType.Release,
+                "Beta" => VersionType.Beta,
+                "Preview" => VersionType.Preview,
+                _ => VersionType.Release
+            });
+            var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
             try
             {
                 if (!Directory.Exists(Options.localDir))
@@ -114,10 +122,10 @@ namespace BedrockLauncher.Core
                     Directory.CreateDirectory(Options.localDir);
                 }
 
-                var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
                 lock (Downloader)
-                 Downloader.DownloadAsync(VersionHelper.GetUri(Client, information.Variations[0].UpdateIds[0].ToString()),
-                    savePath,downloadProgress).Wait();
+                    Downloader.DownloadAsync(
+                        VersionHelper.GetUri(Client, information.Variations[0].UpdateIds[0].ToString()),
+                        savePath, downloadProgress).Wait();
 
 
                 var destinationDirectoryName = Path.Combine(Options.localDir, install_dir);
@@ -134,7 +142,7 @@ namespace BedrockLauncher.Core
                     {
                         process_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
                     }), ((progress, status) =>
-                   {
+                {
                     task.SetResult(1);
                     if (status == AsyncStatus.Error)
                     {
@@ -151,6 +159,13 @@ namespace BedrockLauncher.Core
             catch
             {
                 return false;
+            }
+            finally
+            {
+                if (File.Exists(savePath))
+                {
+                    File.Delete(savePath);
+                }
             }
            
         }
@@ -177,7 +192,6 @@ namespace BedrockLauncher.Core
                 return false;
             }
 
-           
         }
         /// <summary>
         /// 关闭游戏
