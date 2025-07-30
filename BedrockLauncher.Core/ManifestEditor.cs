@@ -12,10 +12,10 @@ namespace BedrockLauncher.Core
         private const string SCCD_BASE64 = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPEN1c3RvbUNhcGFiaWxpdHlEZXNjcmlwdG9yIHhtbG5zPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2FwcHgvMjAxOC9zY2NkIiB4bWxuczpzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2FwcHgvMjAxOC9zY2NkIj4KICA8Q3VzdG9tQ2FwYWJpbGl0aWVzPgogICAgPEN1c3RvbUNhcGFiaWxpdHkgTmFtZT0iTWljcm9zb2Z0LmNvcmVBcHBBY3RpdmF0aW9uXzh3ZWt5YjNkOGJid2UiPjwvQ3VzdG9tQ2FwYWJpbGl0eT4KICA8L0N1c3RvbUNhcGFiaWxpdGllcz4KICA8QXV0aG9yaXplZEVudGl0aWVzIEFsbG93QW55PSJ0cnVlIi8+CiAgPENhdGFsb2c+RkZGRjwvQ2F0YWxvZz4KPC9DdXN0b21DYXBhYmlsaXR5RGVzY3JpcHRvcj4=";
 
         /// <summary>
-        /// Modifies the AppxManifest.xml file and adds a CustomCapability.SCCD file 
+        /// Modifies the AppxManifest.xml file and adds a CustomCapability.SCCD file
         /// </summary>
         /// <returns>True if the operation succeeded; otherwise, false.</returns>
-        public static bool EditManifest(string directory)
+        public static bool EditManifest(string directory,GameBackGroundEditer editer)
         {
             if (string.IsNullOrEmpty(directory))
                 throw new ArgumentNullException(nameof(directory));
@@ -30,20 +30,33 @@ namespace BedrockLauncher.Core
                 XNamespace rescap = "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities";
                 XNamespace uap4 = "http://schemas.microsoft.com/appx/manifest/uap/windows10/4";
                 XNamespace uap10 = "http://schemas.microsoft.com/appx/manifest/uap/windows10/10";
-
+                XNamespace uap = "http://schemas.microsoft.com/appx/manifest/uap/windows10";
+                XNamespace desktop4 = "http://schemas.microsoft.com/appx/manifest/desktop/windows10/4";
                 XElement package = doc.Root;
                 if (package == null)
                     return false;
-
                 UpdateIgnorableNamespaces(package, ns, rescap, uap4, uap10);
                 UpdateApplicationTrustLevel(package, ns, uap10);
                 UpdateCapabilities(package, ns, rescap, uap4);
-
+                XElement applications = package.Element(ns + "Applications");
+                XElement application = applications?.Element(ns + "Application");
+                XElement extenElement = application?.Element(ns + "Extensions");
+                extenElement.RemoveAll();
+                application.SetAttributeValue(desktop4+"SupportsMultipleInstances","true");
+                XElement? xElement = application.Element(uap+ "VisualElements");
+                xElement.SetAttributeValue("AppListEntry","none");
+                if (editer!=null)
+                {
+                    if (editer.isOpen!=false)
+                    {
+                        var element = xElement.Element(uap + "SplashScreen");
+                        element.SetAttributeValue("Image", editer.file);
+                        element.SetAttributeValue("BackgroundColor", editer.color);
+                    }
+                }
                 doc.Save(manifestPath, SaveOptions.DisableFormatting);
-
                 string sccdPath = Path.Combine(directory, "CustomCapability.SCCD");
                 File.WriteAllBytes(sccdPath, Convert.FromBase64String(SCCD_BASE64));
-
                 return true;
             }
             catch
@@ -54,8 +67,9 @@ namespace BedrockLauncher.Core
 
         private static void UpdateIgnorableNamespaces(XElement package, XNamespace ns, XNamespace rescap, XNamespace uap4, XNamespace uap10)
         {
+            XNamespace desktop4 = "http://schemas.microsoft.com/appx/manifest/desktop/windows10/4";
             XAttribute ignorable = package.Attribute("IgnorableNamespaces");
-            string[] requiredNamespaces = { "uap", "uap4", "uap10", "rescap" };
+            string[] requiredNamespaces = { "uap", "uap4", "uap10", "rescap","desktop4" };
 
             if (ignorable == null)
             {
@@ -70,7 +84,7 @@ namespace BedrockLauncher.Core
                     ignorable.Value = string.Join(" ", existingNamespaces.Concat(missingNamespaces));
                 }
             }
-
+            package.SetAttributeValue(XNamespace.Xmlns+ "desktop4",desktop4.NamespaceName);
             package.SetAttributeValue(XNamespace.Xmlns + "rescap", rescap.NamespaceName);
             package.SetAttributeValue(XNamespace.Xmlns + "uap4", uap4.NamespaceName);
             package.SetAttributeValue(XNamespace.Xmlns + "uap10", uap10.NamespaceName);

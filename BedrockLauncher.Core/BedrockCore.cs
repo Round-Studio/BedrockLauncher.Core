@@ -99,12 +99,11 @@ namespace BedrockLauncher.Core
         /// 安装MC
         /// </summary>
         /// <param name="information">版本信息</param>
-        /// <param name="downloadProgress">下载进度</param>
         /// <param name="install_dir">安装目录名称</param>
-        /// <param name="process_percent">安装进度</param>
-        /// <param name="result_callback">结果callback</param>
+        /// <param name="callback">回调</param>
+        /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
         /// <returns></returns>
-        public bool InstallVersion(VersionInformation information,string install_dir,InstallCallback callback)
+        public bool InstallVersion(VersionInformation information,string install_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
         {
            
             var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
@@ -140,7 +139,7 @@ namespace BedrockLauncher.Core
                 callback.install_states(InstallStates.unziped);
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
 
-                ManifestEditor.EditManifest(destinationDirectoryName);
+                ManifestEditor.EditManifest(destinationDirectoryName,gameBackGround);
 
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 callback.install_states(InstallStates.registering);
@@ -153,15 +152,17 @@ namespace BedrockLauncher.Core
                     task.SetResult(1);
                     if (status == AsyncStatus.Error)
                     {
+                        
                         callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
                     }
                     else
                     {
+                        callback.install_states(InstallStates.registered);
                         callback.result_callback(status, null);
                     }
                 }));
                 task.Task.Wait();
-                callback.install_states(InstallStates.registered);
+               
                 return true;
             }
             catch (Exception ex)
