@@ -30,7 +30,7 @@ namespace BedrockLauncherExample
                         Console.WriteLine(exception);
                     })
                 };
-                var changeVersion = core.ChangeVersion("E:\\source\\BedrockLauncher.Core\\BedrockLauncherExample\\bin\\Debug\\net8.0-windows10.0.19041.0\\Version\\1.21.9401",callback);
+                var changeVersion = core.ChangeVersion("E:\\BedrockLauncher\\Minecraft-1.21.82.1",callback);
                 Console.ReadLine();
             }
             catch (Exception e)
