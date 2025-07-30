@@ -18,7 +18,8 @@ namespace BedrockLauncher.Core
         /// <summary>
         /// 下载进度
         /// </summary>
-        public required Progress<DownloadProgress> downloadProgress { get; set; } 
+        public Progress<DownloadProgress> downloadProgress { get; set; } =
+            new Progress<DownloadProgress>((progress => { }));
         /// <summary>
         /// 部署进度
         /// </summary>
@@ -28,7 +29,7 @@ namespace BedrockLauncher.Core
         /// </summary>
         public required Action<AsyncStatus, Exception> result_callback { get; set; }
 
-        public required Progress<ZipProgress> zipProgress { get; set; }
+        public  Progress<ZipProgress> zipProgress { get; set; } = new Progress<ZipProgress>((progress => { }));
         /// <summary>
         /// 安装状态
         /// </summary>

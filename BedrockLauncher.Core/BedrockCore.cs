@@ -41,7 +41,7 @@ namespace BedrockLauncher.Core
         {
             if (Options == null)
             {
-                Options = new CoreOptions();
+                Options = new CoreOptions(){localDir = Directory.GetCurrentDirectory()};
             }
 
             if (Options.autoOpenWindowsDevelopment || !GetWindowsDevelopmentState())
@@ -103,10 +103,10 @@ namespace BedrockLauncher.Core
         /// <param name="callback">回调</param>
         /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
         /// <returns></returns>
-        public bool InstallVersion(VersionInformation information,string install_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        public bool InstallVersion(VersionInformation information,string install_dirName,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
         {
            
-            var savePath = Path.Combine(Options.localDir, install_dir + ".appx");
+            var savePath = Path.Combine(Options.localDir, install_dirName + ".appx");
             try
             {
 
@@ -123,7 +123,7 @@ namespace BedrockLauncher.Core
                     callback.install_states(InstallStates.downloading);
                     var result = Downloader.DownloadAsync(
                         uri,
-                        savePath, callback.downloadProgress,callback.CancellationToken).Result;
+                        appx_dir, callback.downloadProgress,callback.CancellationToken).Result;
                     callback.install_states(InstallStates.downloaded);
                     if (result != true)
                     {
@@ -132,9 +132,10 @@ namespace BedrockLauncher.Core
                 }
 
 
-                var destinationDirectoryName = Path.Combine(Options.localDir, install_dir);
+                var destinationDirectoryName = Path.Combine(Options.localDir, install_dirName);
                 callback.install_states(InstallStates.unzipng);
-                ZipExtractor.ExtractWithProgress(savePath,destinationDirectoryName,callback.zipProgress);
+               
+                ZipExtractor.ExtractWithProgress(appx_dir,destinationDirectoryName,callback.zipProgress);
                 //ZipFile.ExtractToDirectory(savePath, destinationDirectoryName,true);
                 callback.install_states(InstallStates.unziped);
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
@@ -149,21 +150,26 @@ namespace BedrockLauncher.Core
                       callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
                     }), ((progress, status) =>
                 {
-                    task.SetResult(1);
+                    
                     if (status == AsyncStatus.Error)
                     {
-                        
+                        task.SetResult(1);
                         callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
                     }
                     else
                     {
+                        task.SetResult(0);
                         callback.install_states(InstallStates.registered);
                         callback.result_callback(status, null);
                     }
                 }));
                 task.Task.Wait();
-               
-                return true;
+                if (task.Task.Result == 0)
+                {
+                    return true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -178,9 +184,54 @@ namespace BedrockLauncher.Core
             }
            
         }
+        /// <summary>
+        /// 更换版本
+        /// </summary>
+        /// <param name="Version">游戏本体路径文件夹(绝对路径！！)，此文件夹中包含AppxManifest.xml</param>
+        /// <returns></returns>
+        public bool ChangeVersion(string Version,InstallCallback callback)
+        {
+            if (Version == string.Empty)
+            {
+                return false;
+            }
+
+            var xml = Path.Combine(Version, "AppxManifest.xml");
+            if (File.Exists(xml))
+            {
+                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+                callback.install_states(InstallStates.registering);
+                Native.Native.RegisterAppxAsync(xml, (
+                    (progress, deploymentProgress) =>
+                    {
+                        callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
+                    }), ((progress, status) =>
+                    {
+                    
+                    if (status == AsyncStatus.Error)
+                    {
+
+                        task.SetResult(1);
+                        callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
+                    }
+                    else
+                    {
+                        task.SetResult(0);
+                        callback.install_states(InstallStates.registered);
+                        callback.result_callback(status, null);
+                    }
+                }));
+                task.Task.Wait();
+                if (task.Task.Result == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         /// <summary>
-        /// 启动游戏
+        /// 启动游戏 如果你要切换你安装的游戏请在调用次函数前调用ChangeVersion函数
         /// </summary>
         /// <returns></returns>
         public bool LaunchGame(VersionType type)
