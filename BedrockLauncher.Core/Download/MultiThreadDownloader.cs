@@ -44,14 +44,13 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
     {
         if (string.IsNullOrWhiteSpace(url))
         {
-            Console.WriteLine("错误: URL 不能为空或空白");
-            return false;
+             throw new Exception("错误: URL 不能为空或空白");
         }
 
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            Console.WriteLine("错误: 文件路径不能为空或空白");
-            return false;
+            throw new Exception("错误: 文件路径不能为空或空白");
+           
         }
 
         Uri uri;
@@ -61,8 +60,8 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         }
         catch (UriFormatException ex)
         {
-            Console.WriteLine($"错误: URL 格式无效{ex.Message}");
-            return false; 
+            throw new Exception($"错误: URL 格式无效{ex.Message}");
+            
         }
 
         try
@@ -91,33 +90,26 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
                 await DownloadAsStreamAsync(uri, filePath, progress, cancellationToken);
             }
 
-            // 如果执行到这里没有抛出异常，说明下载成功
             Console.WriteLine($"文件已成功下载并保存到: {filePath}");
             return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Console.WriteLine("下载被用户取消");
-            return false; // 取消操作视为失败
+            return false; 
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || (ex.InnerException == null && ex.CancellationToken == default))
         {
-            // 注意：HttpClient.Timeout 导致的超时通常抛出 TaskCanceledException
-            // 如果是默认 CancellationToken 且被取消，很可能是超时
-            Console.WriteLine($"下载失败: 请求超时 (超过 {_defaultTimeout.TotalSeconds} 秒)");
+            throw new Exception($"下载失败: 请求超时 (超过 {_defaultTimeout.TotalSeconds} 秒)");
             return false;
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"下载失败: 网络请求错误{ex.Message}");
+            throw new Exception($"下载失败: 网络请求错误{ex.Message}");
             return false;
         }
-        catch (Exception ex) // 捕获其他所有未预见的异常
+        catch (Exception ex) 
         {
-            Console.WriteLine($"下载过程中发生未预期的错误: {ex}");
-            // 可以选择重新抛出未预见的异常，或者像下面这样记录并返回 false
-            // throw; // 如果希望调用者处理未预见异常，可以取消注释
-            return false; // 将未预见异常也视为失败
+            throw new Exception($"下载过程中发生未预期的错误: {ex}");
         }
     }
 
@@ -136,7 +128,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"HEAD 请求失败: {ex.Message}");
+            throw new Exception($"HEAD 请求失败: {ex.Message}");
         }
         try
         {
@@ -153,7 +145,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"带 Range 的 GET 请求失败: {ex.Message}");
+           throw new Exception($"带 Range 的 GET 请求失败: {ex.Message}");
         }
         try
         {
@@ -167,7 +159,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"完整 GET 请求失败: {ex.Message}");
+            throw new Exception($"完整 GET 请求失败: {ex.Message}");
         }
         return (-1, false);
     }

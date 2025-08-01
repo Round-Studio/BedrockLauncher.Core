@@ -24,8 +24,6 @@ namespace BedrockLauncher.Core
     {
         public CoreOptions Options { get; set; }
         public ImprovedFlexibleMultiThreadDownloader Downloader { get; set; }
-
-
         public BedrockCore()
         {
             if (!OperatingSystem.IsWindows())
@@ -103,18 +101,13 @@ namespace BedrockLauncher.Core
         /// <param name="callback">回调</param>
         /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
         /// <returns></returns>
-        public bool InstallVersion(VersionInformation information,string install_dirName,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        public void InstallVersion(VersionInformation information,string install_dirName,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
         {
-           
             var savePath = Path.Combine(Options.localDir, install_dirName + ".appx");
-            try
-            {
-
                 if (!Directory.Exists(Options.localDir))
                 {
                     Directory.CreateDirectory(Options.localDir);
                 }
-
                 callback.install_states(InstallStates.getingDownloadUri);
                 var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
                 callback.install_states(InstallStates.gotDownloadUri);
@@ -127,10 +120,9 @@ namespace BedrockLauncher.Core
                     callback.install_states(InstallStates.downloaded);
                     if (result != true)
                     {
-                        return false;
+                        return;
                     }
                 }
-
 
                 var destinationDirectoryName = Path.Combine(Options.localDir, install_dirName);
                 callback.install_states(InstallStates.unzipng);
@@ -141,9 +133,9 @@ namespace BedrockLauncher.Core
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
 
                 ManifestEditor.EditManifest(destinationDirectoryName,gameBackGround);
-
-                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 callback.install_states(InstallStates.registering);
+                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+                
                 Native.Native.RegisterAppxAsync(Path.Combine(destinationDirectoryName, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
@@ -166,23 +158,12 @@ namespace BedrockLauncher.Core
                 task.Task.Wait();
                 if (task.Task.Result == 0)
                 {
-                    return true;
+                    return;
                 }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-               throw;
-            }
-            finally
-            {
                 if (File.Exists(savePath))
                 {
                     File.Delete(savePath);
                 }
-            }
-           
         }
         /// <summary>
         /// 更换版本
@@ -250,7 +231,6 @@ namespace BedrockLauncher.Core
             {
                 return false;
             }
-
         }
         /// <summary>
         /// 关闭游戏
@@ -269,10 +249,9 @@ namespace BedrockLauncher.Core
         /// 删除游戏
         /// </summary>
         /// <returns></returns>
-        public bool RemoveGame(VersionType type)
+        public void RemoveGame(VersionType type)
         {
-            try
-            {
+           
                 var packageManager = new PackageManager();
                 var packages = packageManager.FindPackagesForUser("");
                 
@@ -291,18 +270,6 @@ namespace BedrockLauncher.Core
                             RemovalOptions.PreserveApplicationData).AsTask().Wait();
                     }
                 }
-                return true;
-            }
-            catch 
-            {
-                return false;
-            }
-            
-        }
-
-        private string CheckMD5(string uri)
-        {
-            return string.Empty;
         }
     
     }
