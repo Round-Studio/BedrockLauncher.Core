@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,7 @@ using static BedrockLauncher.Core.Native.Native;
 
 namespace BedrockLauncher.Core
 {
+    
     public class BedrockCore
     {
         public CoreOptions Options { get; set; }
@@ -35,6 +37,7 @@ namespace BedrockLauncher.Core
         /// <summary>
         /// 初始化
         /// </summary>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         public void Init()
         {
             if (Options == null)
@@ -101,6 +104,9 @@ namespace BedrockLauncher.Core
         /// <param name="callback">回调</param>
         /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
         /// <returns></returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
         public void InstallVersion(VersionInformation information,string install_dirName,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
         {
             var savePath = Path.Combine(Options.localDir, install_dirName + ".appx");
@@ -170,6 +176,7 @@ namespace BedrockLauncher.Core
         /// </summary>
         /// <param name="Version">游戏本体路径文件夹(绝对路径！！)，此文件夹中包含AppxManifest.xml</param>
         /// <returns></returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         public bool ChangeVersion(string Version,InstallCallback callback)
         {
             if (Version == string.Empty)
@@ -215,6 +222,7 @@ namespace BedrockLauncher.Core
         /// 启动游戏 如果你要切换你安装的游戏请在调用次函数前调用ChangeVersion函数
         /// </summary>
         /// <returns></returns>
+         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         public bool LaunchGame(VersionType type)
         {
             var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(type switch {
@@ -249,6 +257,7 @@ namespace BedrockLauncher.Core
         /// 删除游戏
         /// </summary>
         /// <returns></returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
         public void RemoveGame(VersionType type)
         {
            

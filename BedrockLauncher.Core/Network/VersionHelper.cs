@@ -117,7 +117,6 @@ namespace BedrockLauncher.Core.Network
                     {
                         var versionInformation = JsonSerializer.Deserialize<VersionInformation>(i.Value.ToJsonString());
                         versions.Add(versionInformation);
-                        Console.WriteLine(versionInformation.ID);
                     }
                 }
                 return versions;
