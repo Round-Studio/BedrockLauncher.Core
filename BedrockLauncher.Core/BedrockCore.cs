@@ -132,9 +132,7 @@ namespace BedrockLauncher.Core
 
                 var destinationDirectoryName = Path.Combine(Options.localDir, install_dirName);
                 callback.install_states(InstallStates.unzipng);
-               
                 ZipExtractor.ExtractWithProgress(appx_dir,destinationDirectoryName,callback.zipProgress);
-                //ZipFile.ExtractToDirectory(savePath, destinationDirectoryName,true);
                 callback.install_states(InstallStates.unziped);
                 File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
 
