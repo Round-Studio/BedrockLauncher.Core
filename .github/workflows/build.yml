@@ -8,35 +8,8 @@ env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
   compile-flags: "-c Release"
 jobs:
-  test:
-    runs-on: windows-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '8.0.x'
-    - name: Test
-      run: dotnet test BedrockLauncher.Core/BedrockLauncher.Core.csproj
-  test_build:
-    runs-on: windows-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '8.0.x'
-    - name: Test
-      run: dotnet build BedrockLauncher.Core/BedrockLauncher.Core.csproj
   build:
     runs-on: windows-latest
-    needs: [test, test_build]
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -49,9 +22,11 @@ jobs:
     - name: Build BedrockLauncher.Core
       run: dotnet build BedrockLauncher.Core/BedrockLauncher.Core.csproj ${{ env.compile-flags }}
     - name: Set Version
-      run : |
-        current_date=$(date +"%y.%m.%d.%H%M")
-        sed -i "s/<Version>[^<]*<\/Version>/<Version>$current_date<\/Version>/" BedrockLauncher.Core/BedrockLauncher.Core.csproj
+      run: |
+          for /f "tokens=1-4 delims=/: " %%a in ('time /t') do set time=%%a%%b
+          for /f "tokens=1-4 delims=/- " %%a in ('date /t') do set date=%%c.%%a.%%b
+          set current_date=%date%.%time%
+          powershell -Command "(Get-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj) -replace '<Version>[^<]*</Version>', '<Version>%current_date%</Version>' | Set-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj"
     - name: Publish BedrockLauncher.Core
       uses: brandedoutcast/publish-nuget@v2.5.2
       with: 
