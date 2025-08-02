@@ -75,7 +75,7 @@ namespace BedrockLauncher.Core
             }
             catch
             {
-                return false;
+                throw new Exception("无法正常开启开发者模式");
             }
 
         }
@@ -85,15 +85,24 @@ namespace BedrockLauncher.Core
         /// <returns>true为开启，false为关闭</returns>
         public bool GetWindowsDevelopmentState()
         {
-            var AppModelUnlock = Registry.LocalMachine.OpenSubKey(
-                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock", true);
-            var value = AppModelUnlock.GetValue("AllowDevelopmentWithoutDevLicense", 1);
-            if ((int)value == 0)
+            try
             {
-                return false;
-            }
+                var AppModelUnlock = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock", true);
+                var value = AppModelUnlock.GetValue("AllowDevelopmentWithoutDevLicense", 1);
+                if ((int)value == 0)
+                {
+                    return false;
+                }
 
-            return true;
+                return true;
+            }
+            catch 
+            {
+                
+                throw new Exception("无法正常获取Windows开发者状态");
+            }
+         
         }
 
         /// <summary>

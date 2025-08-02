@@ -11,15 +11,16 @@ namespace BedrockLauncher.Core.CoreOption
         /// <summary>
         /// 是否自动打开Windows开发者模式
         /// </summary>
-        public bool autoOpenWindowsDevelopment { get; set; }
+        public bool autoOpenWindowsDevelopment { get; set; } = true;
         /// <summary>
         /// 安装文件夹 绝对路径
         /// </summary>
-        public required string localDir { get; set; } 
+        public required string localDir { get; set; }
+
         /// <summary>
         /// 自动补全VC UWP运行库
         /// </summary>
-        public bool autoCompleteVC { get; set; }
-        
+        public bool autoCompleteVC { get; set; } = true;
+
     }
 }
