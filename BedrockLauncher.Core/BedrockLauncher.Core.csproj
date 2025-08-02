@@ -12,8 +12,12 @@
 	  <Company>Round Studio</Company>
 	  <Product>BedrockLauncher.Core</Product>
 	  <Description>Minecraft Bedrock Installer and Launcher</Description>
-	  <Copyright>Microsoft and Mojang Studio</Copyright>
+	  <Copyright>Minecraft for Microsoft and Mojang Studio</Copyright>
 	  <RepositoryUrl>https://github.com/Round-Studio/BedrockLauncher.Core</RepositoryUrl>
+	  <Version>$([System.DateTime]::Now.ToString(yy.MM.dd.HHmm))</Version>
+	  <PackageProjectUrl>https://github.com/Round-Studio/BedrockLauncher.Core</PackageProjectUrl>
+	  <PackageLicenseUrl>https://mit-license.org/</PackageLicenseUrl>
+	  <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
