@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 
 public class ImprovedFlexibleMultiThreadDownloader : IDisposable
 {
@@ -40,6 +42,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
     /// <param name="progress">用于报告下载进度的回调</param>
     /// <param name="cancellationToken">用于取消操作的令牌</param>
     /// <returns>如果下载成功则返回 true，否则返回 false</returns>
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(HttpClient))]
     public async Task<bool> DownloadAsync(string url, string filePath, IProgress<DownloadProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -76,21 +79,21 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
 
             if (fileSize > 0 && supportsRange)
             {
-                Console.WriteLine($"服务器支持断点续传且文件大小已知 ({fileSize} bytes)，使用多线程下载 (线程数: {_maxConcurrency})...");
+                Debug.WriteLine($"服务器支持断点续传且文件大小已知 ({fileSize} bytes)，使用多线程下载 (线程数: {_maxConcurrency})...");
                 await DownloadMultiPartAsync(uri, filePath, fileSize, progress, cancellationToken);
             }
             else if (fileSize > 0 && !supportsRange)
             {
-                Console.WriteLine($"文件大小已知 ({fileSize} bytes) 但服务器不支持断点续传，使用单线程下载...");
+                Debug.WriteLine($"文件大小已知 ({fileSize} bytes) 但服务器不支持断点续传，使用单线程下载...");
                 await DownloadSinglePartAsync(uri, filePath, fileSize, progress, cancellationToken);
             }
             else
             {
-                Console.WriteLine("无法获取文件大小或服务器不支持必要的功能，使用流式单线程下载 (无法显示进度百分比)...");
+                Debug.WriteLine("无法获取文件大小或服务器不支持必要的功能，使用流式单线程下载 (无法显示进度百分比)...");
                 await DownloadAsStreamAsync(uri, filePath, progress, cancellationToken);
             }
 
-            Console.WriteLine($"文件已成功下载并保存到: {filePath}");
+            Debug.WriteLine($"文件已成功下载并保存到: {filePath}");
             return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -243,7 +246,6 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         try
         {
             await Task.WhenAll(tasks);
-            Console.WriteLine("所有分块下载完成，正在合并文件...");
             await MergeTempFilesAsync(tempFiles, filePath, cancellationToken);
             // 强制报告最终 100% 进度
             progress?.Report(new DownloadProgress
@@ -251,7 +253,6 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
                 TotalBytes = fileSize,
                 DownloadedBytes = fileSize
             });
-            Console.WriteLine($"文件合并完成: {filePath}");
         }
         catch (Exception)
         {
@@ -356,7 +357,6 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
             TotalBytes = -1,
             DownloadedBytes = totalBytesRead
         });
-        Console.WriteLine($"文件已成功下载并保存到: {filePath} (大小: {totalBytesRead} bytes)");
     }
 
     private async Task MergeTempFilesAsync(string[] tempFiles, string outputPath, CancellationToken cancellationToken)
@@ -379,15 +379,8 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         {
             if (File.Exists(tempFile))
             {
-                try
-                {
+               
                     File.Delete(tempFile);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"清理临时文件失败 '{tempFile}': {ex.Message}");
-                    // 不抛出异常，继续清理其他文件
-                }
             }
         }
     }

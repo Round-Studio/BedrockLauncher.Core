@@ -7,16 +7,27 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <PublishTrimmed>false</PublishTrimmed>
+	  <Title>BedrockLauncher.Core</Title>
+	  <Authors>Round Studio</Authors>
+	  <Company>Round Studio</Company>
+	  <Product>BedrockLauncher.Core</Product>
+	  <Description>Minecraft Bedrock Installer and Launcher</Description>
+	  <Copyright>Microsoft and Mojang Studio</Copyright>
+	  <RepositoryUrl>https://github.com/Round-Studio/BedrockLauncher.Core</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>False</Optimize>
     <DebugType>embedded</DebugType>
     <Deterministic>True</Deterministic>
+    <IsAotCompatible>True</IsAotCompatible>
+    <IsTrimmable>False</IsTrimmable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>embedded</DebugType>
     <Deterministic>True</Deterministic>
+    <IsAotCompatible>True</IsAotCompatible>
+    <IsTrimmable>False</IsTrimmable>
   </PropertyGroup>
 </Project>
