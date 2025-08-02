@@ -9,14 +9,18 @@ A Minecraft Bedrock Launch Core
 > **Minecraft Bedrock Edition 核心管理库**  
 > 用于安装、切换、启动、卸载 Minecraft UWP 版本的 .NET 核心库，支持多版本管理、背景自定义、自动依赖补全和开发者模式控制。
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![.NET](https://img.shields.io/badge/.NET-8.0%2B-orange)](https://dotnet.microsoft.com/download)
+ 📦 可通过 NuGet 安装核心库：[BedrockLauncher.Core](https://www.nuget.org/packages/BedrockLauncher.Core/)
 
+ ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![.NET](https://img.shields.io/badge/.NET-8.0%2B-orange)](https://dotnet.microsoft.com/download)
 ---
 
 ## 📌 简介
 
 `BedrockLauncher.Core` 是一个轻量级、高性能的 .NET 库，专为 **Minecraft Bedrock（UWP 版）** 的版本管理而设计。它允许第三方启动器实现以下功能：
+> [!WARNING]  
+> 本项目提供的多为同步函数。  
+> 必须以 **管理员权限** 运行程序，否则无法访问系统资源或正常启动。
 
 - ✅ 自动下载并安装指定版本的 Minecraft
 - ✅ 切换不同游戏版本（多开支持）
