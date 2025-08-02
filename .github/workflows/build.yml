@@ -23,10 +23,10 @@ jobs:
       run: dotnet build BedrockLauncher.Core/BedrockLauncher.Core.csproj ${{ env.compile-flags }}
     - name: Set Version
       run: |
-          for /f "tokens=1-4 delims=/: " %%a in ('time /t') do set time=%%a%%b
-          for /f "tokens=1-4 delims=/- " %%a in ('date /t') do set date=%%c.%%a.%%b
-          set current_date=%date%.%time%
-          powershell -Command "(Get-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj) -replace '<Version>[^<]*</Version>', '<Version>%current_date%</Version>' | Set-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj"
+          for /f "tokens=2 delims==" %d in ('wmic os get localdatetime /value ^| findstr "="') do @set dt=%d
+          for /f "tokens=1-2 delims=:" %a in ("%TIME: =0%") do @set h=%a & set m=%b
+          set v=%dt:~4,2%.%dt:~6,2%.%dt:~2,2%.%h%%m:~0,2%
+          powershell -Command "(Get-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj) -replace '<Version>[^<]*</Version>', '<Version>%v%</Version>' | Set-Content BedrockLauncher.Core/BedrockLauncher.Core.csproj"
     - name: Publish BedrockLauncher.Core
       uses: brandedoutcast/publish-nuget@v2.5.2
       with: 
