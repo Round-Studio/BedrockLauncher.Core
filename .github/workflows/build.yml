@@ -9,7 +9,7 @@ env:
   compile-flags: "-c Release"
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -22,7 +22,7 @@ jobs:
     - name: Test
       run: dotnet test BedrockLauncher.Core/BedrockLauncher.Core.csproj
   test_build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
     - name: Test
       run: dotnet build BedrockLauncher.Core/BedrockLauncher.Core.csproj
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [test, test_build]
     steps:
     - name: Checkout
