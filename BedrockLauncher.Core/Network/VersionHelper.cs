@@ -103,8 +103,6 @@ namespace BedrockLauncher.Core.Network
 
         public static List<VersionInformation> GetVersions(string uri)
         {
-            
-       
             using (WebClient client = new WebClient())
             {
                 var result = client.DownloadString(uri);

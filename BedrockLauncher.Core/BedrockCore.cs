@@ -42,7 +42,7 @@ namespace BedrockLauncher.Core
         {
             if (Options == null)
             {
-                Options = new CoreOptions(){localDir = Directory.GetCurrentDirectory()};
+                Options = new CoreOptions(){};
             }
 
             if (Options.autoOpenWindowsDevelopment || !GetWindowsDevelopmentState())
@@ -53,11 +53,6 @@ namespace BedrockLauncher.Core
             if (Options.autoCompleteVC)
             {
                 CompleteFrameWorkHelper.CompleteVC();
-            }
-
-            if (!Directory.Exists(Options.localDir))
-            {
-                Directory.CreateDirectory(Options.localDir);
             }
         }
 
@@ -99,29 +94,29 @@ namespace BedrockLauncher.Core
             }
             catch 
             {
-                
                 throw new Exception("无法正常获取Windows开发者状态");
             }
          
         }
-
+        
         /// <summary>
         /// 安装MC
         /// </summary>
         /// <param name="information">版本信息</param>
-        /// <param name="install_dir">安装目录名称</param>
+        /// <param name="install_dir">安装目录</param>
+        /// <param name="appx_dir">appx存储</param>
         /// <param name="callback">回调</param>
         /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
         /// <returns></returns>
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public void InstallVersion(VersionInformation information,string install_dirName,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        public void InstallVersion(VersionInformation information,string install_dir,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
         {
-            var savePath = Path.Combine(Options.localDir, install_dirName + ".appx");
-                if (!Directory.Exists(Options.localDir))
+          
+                if (!Directory.Exists(install_dir))
                 {
-                    Directory.CreateDirectory(Options.localDir);
+                    Directory.CreateDirectory(install_dir);
                 }
                 callback.install_states(InstallStates.getingDownloadUri);
                 var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
@@ -138,23 +133,21 @@ namespace BedrockLauncher.Core
                         return;
                     }
                 }
-
-                var destinationDirectoryName = Path.Combine(Options.localDir, install_dirName);
                 callback.install_states(InstallStates.unzipng);
-                ZipExtractor.ExtractWithProgress(appx_dir,destinationDirectoryName,callback.zipProgress);
+                ZipExtractor.ExtractWithProgress(appx_dir,install_dir,callback.zipProgress);
                 callback.install_states(InstallStates.unziped);
-                File.Delete(Path.Combine(destinationDirectoryName, "AppxSignature.p7x"));
+                File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
 
-                ManifestEditor.EditManifest(destinationDirectoryName,gameBackGround);
+                ManifestEditor.EditManifest(install_dir, gameBackGround);
                 callback.install_states(InstallStates.registering);
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 
-                Native.Native.RegisterAppxAsync(Path.Combine(destinationDirectoryName, "AppxManifest.xml"), (
+                Native.Native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
                       callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
                     }), ((progress, status) =>
-                {
+                    {
                     
                     if (status == AsyncStatus.Error)
                     {
@@ -173,9 +166,9 @@ namespace BedrockLauncher.Core
                 {
                     return;
                 }
-                if (File.Exists(savePath))
+                if (File.Exists(appx_dir))
                 {
-                    File.Delete(savePath);
+                    File.Delete(appx_dir);
                 }
         }
         /// <summary>

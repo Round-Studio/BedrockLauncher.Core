@@ -8,8 +8,8 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
     private readonly int _maxConcurrency;
     private readonly int _bufferSize;
     private readonly TimeSpan _defaultTimeout; // 用于存储默认超时时间
-    private const long ProgressReportThresholdBytes = 100 * 1024;
-    private static readonly TimeSpan ProgressReportInterval = TimeSpan.FromMilliseconds(1000);
+   // private const long ProgressReportThresholdBytes = 100 * 1024;
+    private static readonly TimeSpan ProgressReportInterval = TimeSpan.FromMilliseconds(2000);
 
     /// <summary>
     /// 初始化
@@ -17,7 +17,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
     /// <param name="maxConcurrency">最大并发下载线程数</param>
     /// <param name="bufferSize">每次读写操作的缓冲区大小</param>
     /// <param name="defaultTimeoutSeconds">默认的单个 HTTP 请求超时时间（秒）默认为 100 秒</param>
-    public ImprovedFlexibleMultiThreadDownloader(int maxConcurrency = 4, int bufferSize = 81920, int defaultTimeoutSeconds = 100)
+    public ImprovedFlexibleMultiThreadDownloader(int maxConcurrency = 4, int bufferSize = 81920, int defaultTimeoutSeconds = 20)
     {
         var handler = new HttpClientHandler
         {
@@ -184,8 +184,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         {
             var currentTotal = Interlocked.Read(ref totalDownloadedBytes);
             var now = DateTimeOffset.UtcNow;
-            bool shouldReport = force ||
-                                (currentTotal - lastReportedBytes) >= ProgressReportThresholdBytes ||
+            bool shouldReport = force  ||
                                 (now - lastReportTime) >= ProgressReportInterval;
             if (shouldReport)
             {
@@ -193,7 +192,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
                 {
                     var currentTotalCheck = Interlocked.Read(ref totalDownloadedBytes);
                     var nowCheck = DateTimeOffset.UtcNow;
-                    if (force || (currentTotalCheck - lastReportedBytes) >= ProgressReportThresholdBytes || (nowCheck - lastReportTime) >= ProgressReportInterval)
+                    if (force  || (nowCheck - lastReportTime) >= ProgressReportInterval)
                     {
                         lastReportedBytes = currentTotalCheck;
                         lastReportTime = nowCheck;
@@ -283,7 +282,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         void ReportProgressIfNeeded()
         {
             bool shouldReport =
-                (totalBytesRead - lastReportedBytes) >= ProgressReportThresholdBytes ||
+                
                 (DateTimeOffset.UtcNow - lastReportTime) >= ProgressReportInterval;
             if (shouldReport)
             {
@@ -330,7 +329,7 @@ public class ImprovedFlexibleMultiThreadDownloader : IDisposable
         void ReportProgressIfNeeded()
         {
             bool shouldReport =
-               (totalBytesRead - lastReportedBytes) >= ProgressReportThresholdBytes ||
+               
                (DateTimeOffset.UtcNow - lastReportTime) >= ProgressReportInterval;
             if (shouldReport)
             {

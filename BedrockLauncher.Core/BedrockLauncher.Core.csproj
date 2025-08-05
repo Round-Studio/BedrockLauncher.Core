@@ -15,7 +15,10 @@
 	  <Copyright>Microsoft and Mojang Studio</Copyright>
 	  <RepositoryUrl>https://github.com/Round-Studio/BedrockLauncher.Core</RepositoryUrl>
   </PropertyGroup>
-
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>False</Optimize>
     <DebugType>embedded</DebugType>
