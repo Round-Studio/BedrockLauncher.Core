@@ -108,6 +108,7 @@ namespace BedrockLauncher.Core.Network
                 var result = client.DownloadString(uri);
                 List<VersionInformation> versions = new List<VersionInformation>();
                 var jsonNode = JsonObject.Parse(result).AsObject();
+                jsonNode.Remove("CreationTime");
                 foreach (var value in jsonNode)
                 {
                     var jsonArray = value.Value.AsObject();
