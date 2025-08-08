@@ -18,7 +18,7 @@ namespace BedrockLauncherExample
         {
             try
             {
-                List<VersionInformation> versionInformations = VersionHelper.GetVersions("https://mansui.qzz.io/favicon.ico");
+                List<VersionInformation> versionInformations = VersionHelper.GetVersions("https://data.mcappx.com/v1/bedrock.json");
             }
             catch (Exception e)
             {
