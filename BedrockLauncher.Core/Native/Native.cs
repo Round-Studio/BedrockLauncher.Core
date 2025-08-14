@@ -34,7 +34,7 @@ namespace BedrockLauncher.Core.Native
             try
             {
                 var manager = new PackageManager();
-                var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.ForceUpdateFromAnyVersion | DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceApplicationShutdown);
+                var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.DevelopmentMode);
                 asyncOperationWithProgress.Progress += ((info, progressInfo) => ProgressCallAction(info,progressInfo));
                 asyncOperationWithProgress.Completed += ((info, status) => completeAction(info, status));
             }

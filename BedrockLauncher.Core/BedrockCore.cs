@@ -141,7 +141,12 @@ namespace BedrockLauncher.Core
                 ManifestEditor.EditManifest(install_dir, gameBackGround);
                 callback.install_states(InstallStates.registering);
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
-                
+                RemoveGame(information.Type switch
+                {
+                    "Release" => VersionType.Release,
+                    "Preview" => VersionType.Preview,
+                    "Beta" => VersionType.Beta,
+                });
                 Native.Native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
@@ -189,6 +194,7 @@ namespace BedrockLauncher.Core
             {
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 callback.install_states(InstallStates.registering);
+
                 Native.Native.RegisterAppxAsync(xml, (
                     (progress, deploymentProgress) =>
                     {
