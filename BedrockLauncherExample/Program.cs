@@ -18,7 +18,8 @@ namespace BedrockLauncherExample
         {
             try
             {
-                List<VersionInformation> versionInformations = VersionHelper.GetVersions("https://data.mcappx.com/v1/bedrock.json");
+                ManifestEditor.EditManifest("E:\\BedrockLauncher\\imported_versions\\Microsoft.MinecraftWindowsBeta_1.21.10024.0_x64__8wekyb3d8bbwe.Appx",null);
+                // List<VersionInformation> versionInformations = VersionHelper.GetVersions("https://data.mcappx.com/v1/bedrock.json");
             }
             catch (Exception e)
             {
