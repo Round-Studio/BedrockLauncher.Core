@@ -17,7 +17,7 @@ namespace BedrockLauncher.Core
         /// Modifies the AppxManifest.xml file and adds a CustomCapability.SCCD file
         /// </summary>
         /// <returns>True if the operation succeeded; otherwise, false.</returns>
-        public static bool EditManifest(string directory,GameBackGroundEditer editer)
+        public static bool EditManifest(string directory,string gameName,GameBackGroundEditer editer)
         {
             if (string.IsNullOrEmpty(directory))
                 throw new ArgumentNullException(nameof(directory));
@@ -46,14 +46,24 @@ namespace BedrockLauncher.Core
                 extenElement.RemoveAll();
                 application.SetAttributeValue(desktop4+"SupportsMultipleInstances","true");
                 XElement? xElement = application.Element(uap+ "VisualElements");
+                if (!string.IsNullOrEmpty(gameName))
+                {
+                    xElement.SetAttributeValue("DisplayName", gameName);
+                }
                 xElement.SetAttributeValue("AppListEntry","none");
                 if (editer!=null)
                 {
                     if (editer.isOpen!=false)
                     {
                         var element = xElement.Element(uap + "SplashScreen");
-                        element.SetAttributeValue("Image", editer.file);
-                        element.SetAttributeValue("BackgroundColor", editer.color);
+                        if (!string.IsNullOrEmpty(editer.file))
+                        {
+                            element.SetAttributeValue("Image", editer.file);
+                        }
+                        if (!string.IsNullOrEmpty(editer.color))
+                        {
+                            element.SetAttributeValue("BackgroundColor", editer.color);
+                        }
                     }
                 }
                 doc.Save(manifestPath, SaveOptions.DisableFormatting);

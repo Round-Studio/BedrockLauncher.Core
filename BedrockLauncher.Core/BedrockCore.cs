@@ -96,28 +96,14 @@ namespace BedrockLauncher.Core
             {
                 throw new Exception("无法正常获取Windows开发者状态");
             }
-         
         }
-        
-        /// <summary>
-        /// 安装MC
-        /// </summary>
-        /// <param name="information">版本信息</param>
-        /// <param name="install_dir">安装目录</param>
-        /// <param name="appx_dir">appx存储</param>
-        /// <param name="callback">回调</param>
-        /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
-        /// <returns></returns>
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public void InstallVersion(VersionInformation information,string install_dir,string appx_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        public string DownloadAppx(VersionInformation information,string appx_dir, InstallCallback callback)
         {
-          
-                if (!Directory.Exists(install_dir))
-                {
-                    Directory.CreateDirectory(install_dir);
-                }
+            try
+            {
                 callback.install_states(InstallStates.getingDownloadUri);
                 var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
                 callback.install_states(InstallStates.gotDownloadUri);
@@ -126,34 +112,75 @@ namespace BedrockLauncher.Core
                     callback.install_states(InstallStates.downloading);
                     var result = Downloader.DownloadAsync(
                         uri,
-                        appx_dir, callback.downloadProgress,callback.CancellationToken).Result;
+                        appx_dir, callback.downloadProgress, callback.CancellationToken).Result;
                     callback.install_states(InstallStates.downloaded);
                     if (result != true)
                     {
-                        return;
+                        return string.Empty;
                     }
                 }
-                callback.install_states(InstallStates.unzipng);
-                ZipExtractor.ExtractWithProgress(appx_dir,install_dir,callback.zipProgress);
-                callback.install_states(InstallStates.unziped);
-                File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
 
-                ManifestEditor.EditManifest(install_dir, gameBackGround);
-                callback.install_states(InstallStates.registering);
-                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+                return appx_dir;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+            return string.Empty;
+        }
+        /// <summary>
+        /// 安装MC
+        /// </summary>
+        /// <param name="information">版本信息</param>
+        /// <param name="install_dir">安装目录</param>
+        /// <param name="appx">appx存储</param>
+        /// <param name="callback">回调</param>
+        /// <param name="gameBackGround">游戏启动屏幕修改(如果你不知道你在干什么请勿填写)</param>
+        /// <returns></returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
+        public void InstallVersion(VersionInformation information,string appx, string Gamename, string install_dir, InstallCallback callback, GameBackGroundEditer gameBackGround = null)
+        {
+            try
+            {
+                var downloadAppx = DownloadAppx(information, appx, callback);
+                InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
                 RemoveGame(information.Type switch
                 {
                     "Release" => VersionType.Release,
                     "Preview" => VersionType.Preview,
                     "Beta" => VersionType.Beta,
                 });
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
+        public void InstallVersionByappx(string appx,string Gamename,string install_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        {
+          
+                if (!Directory.Exists(install_dir))
+                {
+                    Directory.CreateDirectory(install_dir);
+                }
+                callback.install_states(InstallStates.unzipng);
+                ZipExtractor.ExtractWithProgress(appx,install_dir,callback.zipProgress);
+                callback.install_states(InstallStates.unziped);
+                File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
+                ManifestEditor.EditManifest(install_dir,Gamename ,gameBackGround);
+                callback.install_states(InstallStates.registering);
+                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 Native.Native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
                       callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
                     }), ((progress, status) =>
                     {
-                    
                     if (status == AsyncStatus.Error)
                     {
                         task.SetResult(1);
@@ -165,15 +192,11 @@ namespace BedrockLauncher.Core
                         callback.install_states(InstallStates.registered);
                         callback.result_callback(status, null);
                     }
-                }));
+                    }));
                 task.Task.Wait();
                 if (task.Task.Result == 0)
                 {
                     return;
-                }
-                if (File.Exists(appx_dir))
-                {
-                    File.Delete(appx_dir);
                 }
         }
         /// <summary>
