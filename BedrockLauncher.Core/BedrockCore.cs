@@ -21,7 +21,6 @@ using static BedrockLauncher.Core.Native.Native;
 
 namespace BedrockLauncher.Core
 {
-    
     public class BedrockCore
     {
         public CoreOptions Options { get; set; }
@@ -72,7 +71,6 @@ namespace BedrockLauncher.Core
             {
                 throw new Exception("无法正常开启开发者模式");
             }
-
         }
         /// <summary>
         /// 获取Windows开发者模式状态
@@ -145,13 +143,18 @@ namespace BedrockLauncher.Core
             try
             {
                 var downloadAppx = DownloadAppx(information, appx, callback);
-                InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
+                if (callback.CancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
                 RemoveGame(information.Type switch
                 {
                     "Release" => VersionType.Release,
                     "Preview" => VersionType.Preview,
                     "Beta" => VersionType.Beta,
                 });
+                InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
+                
             }
             catch (Exception e)
             {
