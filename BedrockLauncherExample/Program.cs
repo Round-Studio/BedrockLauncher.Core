@@ -8,7 +8,6 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using Windows.Foundation;
 using BedrockLauncher.Core.FrameworkComplete;
-using BedrockLauncher.Core.JsonHandle;
 
 namespace BedrockLauncherExample
 {
@@ -18,8 +17,68 @@ namespace BedrockLauncherExample
         {
             try
             {
-                ManifestEditor.EditManifest("E:\\BedrockLauncher\\imported_versions\\Microsoft.MinecraftWindowsBeta_1.21.10024.0_x64__8wekyb3d8bbwe.Appx",null);
-                // List<VersionInformation> versionInformations = VersionHelper.GetVersions("https://data.mcappx.com/v1/bedrock.json");
+                
+                InstallCallback callback = new InstallCallback()
+                {
+                    registerProcess_percent = ((s, u) =>
+                    {
+                        Console.WriteLine(u);
+                    }),
+                    result_callback = ((status, exception) =>
+                    {
+
+                    }),
+                    zipProgress = (new Progress<ZipProgress>((progress =>
+                    {
+
+                    }))),
+                    downloadProgress = (new Progress<DownloadProgress>((progress =>
+                    {
+                        Console.WriteLine(progress.ProgressPercentage);
+                    }))),
+                    install_states = (states =>
+                    {
+                        Console.WriteLine(states);
+                    })
+                };
+                var bedrockCore = new BedrockCore();
+                bedrockCore.Init();
+                bedrockCore.InstallVersionByappx("./a.appx","Test",Path.Combine(Directory.GetCurrentDirectory(),"Testa"),callback);
+                //var versionInformations = VersionHelper.GetVersions("https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
+                //int i = 0;
+                //versionInformations.ForEach((a) =>
+                //{
+                //    Console.WriteLine(a.ID + $"[{i}]" + a.Type);
+                //    i++;
+                //});
+
+                //var readLine = Console.ReadLine();
+                //var i1 = int.Parse(readLine);
+                //bedrockCore.Init();
+                //InstallCallback callback = new InstallCallback()
+                //{
+                //    registerProcess_percent = ((s, u) =>
+                //    {
+
+                //    }),
+                //    result_callback = ((status, exception) =>
+                //    {
+
+                //    }),
+                //    zipProgress = (new Progress<ZipProgress>((progress =>
+                //    {
+
+                //    }))),
+                //    downloadProgress = (new Progress<DownloadProgress>((progress =>
+                //    {
+                //        Console.WriteLine(progress.ProgressPercentage);
+                //    }))),
+                //    install_states = (states =>
+                //    {
+
+                //    })
+                //};
+              //  bedrockCore.DownloadAppx(versionInformations[int.Parse(readLine)],"./a.appx",callback);
             }
             catch (Exception e)
             {
