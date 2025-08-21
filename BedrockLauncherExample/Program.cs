@@ -44,7 +44,7 @@ namespace BedrockLauncherExample
                 var bedrockCore = new BedrockCore();
                 bedrockCore.Init();
                 bedrockCore.InstallVersionByappx("./a.appx","Test",Path.Combine(Directory.GetCurrentDirectory(),"Testa"),callback);
-                //var versionInformations = VersionHelper.GetVersions("https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
+                var versionInformations = VersionHelper.GetVersions("https://raw.gitcode.com/gcw_lJgzYtGB/RecycleObjects/raw/main/data.json");
                 //int i = 0;
                 //versionInformations.ForEach((a) =>
                 //{

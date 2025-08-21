@@ -98,12 +98,12 @@ namespace BedrockLauncher.Core
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public string DownloadAppx(VersionInformation information,string appx_dir, InstallCallback callback)
+        public string DownloadAppx(VersionDetils information,string appx_dir, InstallCallback callback)
         {
             try
             {
                 callback.install_states(InstallStates.getingDownloadUri);
-                var uri = VersionHelper.GetUri(information.Variations[0].UpdateIds[0].ToString());
+                var uri = VersionHelper.GetUri(information.UpdateIds[0].ToString());
                 callback.install_states(InstallStates.gotDownloadUri);
                 lock (Downloader)
                 {
@@ -138,7 +138,7 @@ namespace BedrockLauncher.Core
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public void InstallVersion(VersionInformation information,string appx, string Gamename, string install_dir, InstallCallback callback, GameBackGroundEditer gameBackGround = null)
+        public void InstallVersion(VersionDetils information,VersionType type,string appx, string Gamename, string install_dir, InstallCallback callback, GameBackGroundEditer gameBackGround = null)
         {
             try
             {
@@ -147,12 +147,7 @@ namespace BedrockLauncher.Core
                 {
                     return;
                 }
-                RemoveGame(information.Type switch
-                {
-                    "Release" => VersionType.Release,
-                    "Preview" => VersionType.Preview,
-                    "Beta" => VersionType.Beta,
-                });
+                RemoveGame(type);
                 InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
                 
             }
