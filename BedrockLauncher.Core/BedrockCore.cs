@@ -190,7 +190,7 @@ namespace BedrockLauncher.Core
                         callback.install_states(InstallStates.registered);
                         callback.result_callback(status, null);
                     }
-                    }),callback.CancellationToken);
+                    }));
                 task.Task.Wait();
                 if (task.Task.Result == 0)
                 {
@@ -236,7 +236,7 @@ namespace BedrockLauncher.Core
                         callback.install_states(InstallStates.registered);
                         callback.result_callback(status, null);
                     }
-                }),new CancellationToken());
+                }));
                 task.Task.Wait();
                 if (task.Task.Result == 0)
                 {
