@@ -29,7 +29,7 @@ namespace BedrockLauncher.Core.Native
         /// <param name="ProgressCallAction"></param>
         /// <param name="completeAction"></param>
          [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
-        public static void RegisterAppxAsync(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction, CancellationToken ctx)
+        public static void RegisterAppxAsync(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction)
         {
             try
             {
@@ -37,11 +37,7 @@ namespace BedrockLauncher.Core.Native
                 var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.DevelopmentMode);
                 asyncOperationWithProgress.Progress += ((info, progressInfo) => ProgressCallAction(info,progressInfo));
                 asyncOperationWithProgress.Completed += ((info, status) => completeAction(info, status));
-                if (ctx == null)
-                {
-                    return;
-                }
-                asyncOperationWithProgress.AsTask().WaitAsync(ctx);
+              
             }
             catch 
             {
