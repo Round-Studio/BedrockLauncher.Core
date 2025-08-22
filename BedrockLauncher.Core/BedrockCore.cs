@@ -171,31 +171,8 @@ namespace BedrockLauncher.Core
                 File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
                 ManifestEditor.EditManifest(install_dir,Gamename ,gameBackGround);
                 callback.install_states(InstallStates.registering);
-                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 var native = new Native.Native();
-                native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
-                    (progress, deploymentProgress) =>
-                    {
-                      callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
-                    }), ((progress, status) =>
-                    {
-                    if (status == AsyncStatus.Error)
-                    {
-                        task.SetResult(1);
-                        callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
-                    }
-                    else
-                    {
-                        task.SetResult(0);
-                        callback.install_states(InstallStates.registered);
-                        callback.result_callback(status, null);
-                    }
-                    }));
-                task.Task.Wait();
-                if (task.Task.Result == 0)
-                {
-                    return;
-                }
+                var task = DeploymentProgressWrapper(new PackageManager().RegisterPackageAsync(new Uri(Path.Combine(install_dir, "AppxManifest.xml")), null, DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion), callback);
         }
         /// <summary>
         /// 更换版本
@@ -214,43 +191,55 @@ namespace BedrockLauncher.Core
             var source = new CancellationTokenSource();
             if (File.Exists(xml))
             {
-                TaskCompletionSource<int> task = new TaskCompletionSource<int>();
+               
                 callback.install_states(InstallStates.registering);
-                var native = new Native.Native();
-                native.RegisterAppxAsync(xml, (
-                    (progress, deploymentProgress) =>
-                    {
-                        callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
-                    }), ((progress, status) =>
-                    {
-                    
-                    if (status == AsyncStatus.Error)
-                    {
-
-                        task.SetResult(1);
-                        callback.result_callback(status, new Exception(progress.GetResults().ErrorText));
-                    }
-                    else
-                    {
-                        task.SetResult(0);
-                        callback.install_states(InstallStates.registered);
-                        callback.result_callback(status, null);
-                    }
-                }));
-                task.Task.Wait();
-                if (task.Task.Result == 0)
+                var task = DeploymentProgressWrapper(new PackageManager().RegisterPackageAsync(new Uri(xml), null, DeploymentOptions.DevelopmentMode| DeploymentOptions.ForceUpdateFromAnyVersion),callback);
+                if (task.Exception == null)
                 {
                     return true;
                 }
             }
             return false;
         }
-
+        private async Task DeploymentProgressWrapper(IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> t,InstallCallback callback)
+        {
+            TaskCompletionSource<int> src = new TaskCompletionSource<int>();
+            t.Progress += (v, p) =>
+            {
+                Task.Run((() =>
+                {
+                    callback.registerProcess_percent(p.state.ToString(), p.percentage);
+                    Debug.WriteLine("Deployment progress: " + p.state + " " + p.percentage + "%");
+                }));
+              
+            };
+            t.Completed += (v, p) => {
+                if (p == AsyncStatus.Error)
+                {
+                    Task.Run((() =>
+                    {
+                        callback.result_callback(p, new Exception(v.GetResults().ErrorText));
+                    }));
+                    Debug.WriteLine("Deployment failed: " + v.GetResults().ErrorText);
+                    src.SetException(new Exception("Deployment failed: " + v.GetResults().ErrorText));
+                }
+                else
+                {
+                    Task.Run((() =>
+                    {
+                        callback.install_states(InstallStates.registered);
+                        callback.result_callback(p, null);
+                    }));
+                    src.SetResult(1);
+                }
+            };
+            await src.Task;
+        }
         /// <summary>
         /// 启动游戏 如果你要切换你安装的游戏请在调用次函数前调用ChangeVersion函数
         /// </summary>
         /// <returns></returns>
-         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         public bool LaunchGame(VersionType type)
         {
             var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(type switch {

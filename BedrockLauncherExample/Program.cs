@@ -15,8 +15,6 @@ namespace BedrockLauncherExample
     {
         static void Main(string[] args)
         {
-         
-
                 //InstallCallback callback = new InstallCallback()
                 //{
                 //    registerProcess_percent = ((s, u) =>
