@@ -147,9 +147,8 @@ namespace BedrockLauncher.Core
                 {
                     return;
                 }
-                RemoveGame(type);
+            //    RemoveGame(type);
                 InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
-                
             }
             catch (Exception e)
             {
@@ -173,7 +172,8 @@ namespace BedrockLauncher.Core
                 ManifestEditor.EditManifest(install_dir,Gamename ,gameBackGround);
                 callback.install_states(InstallStates.registering);
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
-                Native.Native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
+                var native = new Native.Native();
+                native.RegisterAppxAsync(Path.Combine(install_dir, "AppxManifest.xml"), (
                     (progress, deploymentProgress) =>
                     {
                       callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
@@ -216,8 +216,8 @@ namespace BedrockLauncher.Core
             {
                 TaskCompletionSource<int> task = new TaskCompletionSource<int>();
                 callback.install_states(InstallStates.registering);
-
-                Native.Native.RegisterAppxAsync(xml, (
+                var native = new Native.Native();
+                native.RegisterAppxAsync(xml, (
                     (progress, deploymentProgress) =>
                     {
                         callback.registerProcess_percent(deploymentProgress.state.ToString(), deploymentProgress.percentage);
