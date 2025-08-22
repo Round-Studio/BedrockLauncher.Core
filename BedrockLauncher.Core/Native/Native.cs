@@ -11,7 +11,7 @@ using BedrockLauncher.Core.Network;
 
 namespace BedrockLauncher.Core.Native
 {
-    public static class Native
+    public  class Native
     {
         [ComImport, Guid("2E941141-7F97-4756-BA1D-9DECDE894A3D")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -29,15 +29,14 @@ namespace BedrockLauncher.Core.Native
         /// <param name="ProgressCallAction"></param>
         /// <param name="completeAction"></param>
          [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
-        public static void RegisterAppxAsync(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction)
+        public  void RegisterAppxAsync(string appxXmlpath,Action <IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress>,DeploymentProgress> ProgressCallAction, Action <IAsyncOperationWithProgress<DeploymentResult,DeploymentProgress>,AsyncStatus> completeAction)
         {
             try
             {
                 var manager = new PackageManager();
-                var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.DevelopmentMode);
+                var asyncOperationWithProgress = manager.RegisterPackageAsync(new Uri(appxXmlpath), null, DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion);
                 asyncOperationWithProgress.Progress += ((info, progressInfo) => ProgressCallAction(info,progressInfo));
                 asyncOperationWithProgress.Completed += ((info, status) => completeAction(info, status));
-              
             }
             catch 
             {
@@ -62,7 +61,6 @@ namespace BedrockLauncher.Core.Native
             }
             catch
             {
-               
                 throw;
             }
         }

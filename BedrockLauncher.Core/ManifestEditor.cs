@@ -43,6 +43,8 @@ namespace BedrockLauncher.Core
                 XElement applications = package.Element(ns + "Applications");
                 XElement application = applications?.Element(ns + "Application");
                 XElement extenElement = application?.Element(ns + "Extensions");
+                XElement identElement = package?.Element(ns+"Identity");
+                identElement.SetAttributeValue("Version",TimeBasedVersion.GetVersion());
                 extenElement.RemoveAll();
                 application.SetAttributeValue(desktop4+"SupportsMultipleInstances","true");
                 XElement? xElement = application.Element(uap+ "VisualElements");
