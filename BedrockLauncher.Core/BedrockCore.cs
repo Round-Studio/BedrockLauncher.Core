@@ -297,6 +297,28 @@ namespace BedrockLauncher.Core
                     }
                 }
         }
-    
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
+        public void RemoveGameClearly(VersionType type)
+        {
+
+            var packageManager = new PackageManager();
+            var packages = packageManager.FindPackagesForUser("");
+
+            foreach (var package in packages)
+            {
+                if (package.Id.FamilyName == type switch
+                    {
+                        VersionType.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
+                        VersionType.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
+                        VersionType.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
+                    })
+                {
+
+                    packageManager.RemovePackageAsync(
+                        package.Id.FullName).AsTask().Wait();
+                }
+            }
+        }
+
     }
 }
