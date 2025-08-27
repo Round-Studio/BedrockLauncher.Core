@@ -106,7 +106,7 @@ InstallCallback callback = new InstallCallback()
     })
 };
 var information = versionInformations[0];
-bedrockCore.InstallVersion(information, Path.Combine(Directory.GetCurrentDirectory(),"testDir"),"./1.appx", callback);
+bedrockCore.InstallVersion(information.Variations[0],VersionType.Release,"./1.appx","genshin","1.21.21", callback);
 bedrockCore.ChangeVersion(Path.Combine(Directory.GetCurrentDirectory(), "testDir"), callback);
 bedrockCore.LaunchGame(VersionType.Preview);
 ```
