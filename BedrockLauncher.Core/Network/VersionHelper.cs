@@ -101,25 +101,77 @@ namespace BedrockLauncher.Core.Network
             return complexUrl ?? urls.LastOrDefault();
         }
 
+        private static readonly HttpClient httpClient = new HttpClient();
+
+        public static async Task<List<VersionInformation>> GetVersionsAsync(string uri)
+        {
+            try
+            {
+                var jsonString = await httpClient.GetStringAsync(uri);
+                return ParseVersionsFromJson(jsonString);
+            }
+            catch (Exception ex)
+            {
+                // 处理异常，记录日志等
+                throw new InvalidOperationException($"Failed to fetch versions from {uri}", ex);
+            }
+        }
+
         public static List<VersionInformation> GetVersions(string uri)
         {
-            using (WebClient client = new WebClient())
+            try
             {
-                var result = client.DownloadString(uri);
-                List<VersionInformation> versions = new List<VersionInformation>();
-                var jsonNode = JsonObject.Parse(result).AsObject();
-                jsonNode.Remove("CreationTime");
-                foreach (var value in jsonNode)
+                using var httpClient = new HttpClient();
+                var jsonString = httpClient.GetStringAsync(uri).GetAwaiter().GetResult();
+                return ParseVersionsFromJson(jsonString);
+            }
+            catch (Exception ex)
+            {
+                // 处理异常，记录日志等
+                throw new InvalidOperationException($"Failed to fetch versions from {uri}", ex);
+            }
+        }
+
+        private static List<VersionInformation> ParseVersionsFromJson(string jsonString)
+        {
+            using var document = JsonDocument.Parse(jsonString);
+            var root = document.RootElement;
+            var versions = new List<VersionInformation>();
+
+            // 移除 CreationTime 字段（如果存在）
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Name == "CreationTime")
+                    continue;
+
+                if (property.Value.ValueKind == JsonValueKind.Object)
                 {
-                    var jsonArray = value.Value.AsObject();
-                    foreach (var i in jsonArray)
+                    foreach (var innerProperty in property.Value.EnumerateObject())
                     {
-                        var versionInformation = JsonSerializer.Deserialize<VersionInformation>(i.Value.ToJsonString());
-                        versions.Add(versionInformation);
+                        if (innerProperty.Value.ValueKind == JsonValueKind.Object)
+                        {
+                            var versionJson = innerProperty.Value.GetRawText();
+                            var versionInfo = JsonSerializer.Deserialize(
+                                versionJson,
+                                VersionJsonContext.Default.VersionInformation
+                            );
+
+                            if (versionInfo != null)
+                            {
+                                versions.Add(versionInfo);
+                            }
+                        }
                     }
                 }
-                return versions;
             }
+
+            return versions;
+        }
+
+        // 可选：提供直接解析JSON字符串的方法
+        public static List<VersionInformation> ParseVersions(string jsonString)
+        {
+            return ParseVersionsFromJson(jsonString);
         }
     }
 }

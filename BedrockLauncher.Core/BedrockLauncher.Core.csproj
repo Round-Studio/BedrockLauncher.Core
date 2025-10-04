@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -10,6 +10,7 @@
 	  <Title>BedrockLauncher.Core</Title>
 	  <Authors>Round Studio</Authors>
 	  <Company>Round Studio</Company>
+	  <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
 	  <Product>BedrockLauncher.Core</Product>
 	  <Description>Minecraft Bedrock Installer and Launcher</Description>
 	  <Copyright>Minecraft for Microsoft and Mojang Studio</Copyright>
@@ -18,6 +19,7 @@
 	  <PackageProjectUrl>https://github.com/Round-Studio/BedrockLauncher.Core</PackageProjectUrl>
 	  <PackageLicenseUrl>https://mit-license.org/</PackageLicenseUrl>
 	  <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+	  <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -30,8 +32,22 @@
     <IsAotCompatible>True</IsAotCompatible>
     <IsTrimmable>False</IsTrimmable>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Optimize>False</Optimize>
+    <DebugType>embedded</DebugType>
+    <Deterministic>True</Deterministic>
+    <IsAotCompatible>True</IsAotCompatible>
+    <IsTrimmable>False</IsTrimmable>
+  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>embedded</DebugType>
+    <Deterministic>True</Deterministic>
+    <IsAotCompatible>True</IsAotCompatible>
+    <IsTrimmable>False</IsTrimmable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebugType>embedded</DebugType>
     <Deterministic>True</Deterministic>
     <IsAotCompatible>True</IsAotCompatible>
