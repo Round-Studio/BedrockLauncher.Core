@@ -117,13 +117,19 @@ namespace BedrockLauncher.Core.Network
             }
         }
 
+        public static List<VersionInformation>? VersionsList { get; private set; } // 减少等待次数.jpg
+
         public static List<VersionInformation> GetVersions(string uri)
         {
+            if (VersionsList != null)
+                return VersionsList;
+            
             try
             {
                 using var httpClient = new HttpClient();
                 var jsonString = httpClient.GetStringAsync(uri).GetAwaiter().GetResult();
-                return ParseVersionsFromJson(jsonString);
+                VersionsList = ParseVersionsFromJson(jsonString);
+                return VersionsList;
             }
             catch (Exception ex)
             {
