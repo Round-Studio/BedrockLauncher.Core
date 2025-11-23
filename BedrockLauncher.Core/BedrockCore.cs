@@ -25,14 +25,17 @@ namespace BedrockLauncher.Core
     {
         public CoreOptions Options { get; set; }
         public ImprovedFlexibleMultiThreadDownloader Downloader { get; set; }
+
         public BedrockCore()
         {
             if (!OperatingSystem.IsWindows())
             {
                 throw new Exception("仅支持Windows平台");
             }
+
             Downloader = new ImprovedFlexibleMultiThreadDownloader();
         }
+
         /// <summary>
         /// 初始化
         /// </summary>
@@ -41,7 +44,7 @@ namespace BedrockLauncher.Core
         {
             if (Options == null)
             {
-                Options = new CoreOptions(){};
+                Options = new CoreOptions() { };
             }
 
             if (Options.autoOpenWindowsDevelopment || !GetWindowsDevelopmentState())
@@ -72,6 +75,7 @@ namespace BedrockLauncher.Core
                 throw new Exception("无法正常开启开发者模式");
             }
         }
+
         /// <summary>
         /// 获取Windows开发者模式状态
         /// </summary>
@@ -90,15 +94,16 @@ namespace BedrockLauncher.Core
 
                 return true;
             }
-            catch 
+            catch
             {
                 throw new Exception("无法正常获取Windows开发者状态");
             }
         }
+
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public string DownloadAppx(VersionDetils information,string appx_dir, InstallCallback callback)
+        public string DownloadAppx(VersionDetils information, string appx_dir, InstallCallback callback)
         {
             try
             {
@@ -124,8 +129,10 @@ namespace BedrockLauncher.Core
             {
                 throw;
             }
+
             return string.Empty;
         }
+
         /// <summary>
         /// 安装MC
         /// </summary>
@@ -138,7 +145,8 @@ namespace BedrockLauncher.Core
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public void InstallVersion(VersionDetils information,VersionType type,string appx, string Gamename, string install_dir, InstallCallback callback, GameBackGroundEditer gameBackGround = null)
+        public void InstallVersion(VersionDetils information, VersionType type, string appx, string Gamename,
+            string install_dir, InstallCallback callback, GameBackGroundEditer gameBackGround = null)
         {
             try
             {
@@ -147,7 +155,8 @@ namespace BedrockLauncher.Core
                 {
                     return;
                 }
-            //    RemoveGame(type);
+
+                //    RemoveGame(type);
                 InstallVersionByappx(downloadAppx, Gamename, install_dir, callback, gameBackGround);
             }
             catch (Exception e)
@@ -155,32 +164,38 @@ namespace BedrockLauncher.Core
                 throw;
             }
         }
+
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(VersionHelper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImprovedFlexibleMultiThreadDownloader))]
-        public void InstallVersionByappx(string appx,string Gamename,string install_dir,InstallCallback callback,GameBackGroundEditer gameBackGround = null)
+        public void InstallVersionByappx(string appx, string Gamename, string install_dir, InstallCallback callback,
+            GameBackGroundEditer gameBackGround = null)
         {
-          
-                if (!Directory.Exists(install_dir))
-                {
-                    Directory.CreateDirectory(install_dir);
-                }
-                callback.install_states(InstallStates.unzipng);
-                ZipExtractor.ExtractWithProgress(appx,install_dir,callback.zipProgress);
-                callback.install_states(InstallStates.unziped);
-                File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
-                ManifestEditor.EditManifest(install_dir,Gamename ,gameBackGround);
-                callback.install_states(InstallStates.registering);
-                var native = new Native.Native();
-                var task = DeploymentProgressWrapper(new PackageManager().RegisterPackageAsync(new Uri(Path.Combine(install_dir, "AppxManifest.xml")), null, DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion), callback);
+
+            if (!Directory.Exists(install_dir))
+            {
+                Directory.CreateDirectory(install_dir);
+            }
+
+            callback.install_states(InstallStates.unzipng);
+            ZipExtractor.ExtractWithProgress(appx, install_dir, callback.zipProgress);
+            callback.install_states(InstallStates.unziped);
+            File.Delete(Path.Combine(install_dir, "AppxSignature.p7x"));
+            ManifestEditor.EditManifest(install_dir, Gamename, gameBackGround);
+            callback.install_states(InstallStates.registering);
+            var native = new Native.Native();
+            var task = DeploymentProgressWrapper(
+                new PackageManager().RegisterPackageAsync(new Uri(Path.Combine(install_dir, "AppxManifest.xml")), null,
+                    DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion), callback);
         }
+
         /// <summary>
         /// 更换版本
         /// </summary>
         /// <param name="Version">游戏本体路径文件夹(绝对路径！！)，此文件夹中包含AppxManifest.xml</param>
         /// <returns></returns>
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
-        public bool ChangeVersion(string Version,InstallCallback callback)
+        public bool ChangeVersion(string Version, InstallCallback callback)
         {
             if (Version == string.Empty)
             {
@@ -191,17 +206,22 @@ namespace BedrockLauncher.Core
             var source = new CancellationTokenSource();
             if (File.Exists(xml))
             {
-               
+
                 callback.install_states(InstallStates.registering);
-                var task = DeploymentProgressWrapper(new PackageManager().RegisterPackageAsync(new Uri(xml), null, DeploymentOptions.DevelopmentMode| DeploymentOptions.ForceUpdateFromAnyVersion),callback);
+                var task = DeploymentProgressWrapper(
+                    new PackageManager().RegisterPackageAsync(new Uri(xml), null,
+                        DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion), callback);
                 if (task.Exception == null)
                 {
                     return true;
                 }
             }
+
             return false;
         }
-        private async Task DeploymentProgressWrapper(IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> t,InstallCallback callback)
+
+        private async Task DeploymentProgressWrapper(
+            IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> t, InstallCallback callback)
         {
             TaskCompletionSource<int> src = new TaskCompletionSource<int>();
             t.Progress += (v, p) =>
@@ -211,15 +231,12 @@ namespace BedrockLauncher.Core
                     callback.registerProcess_percent(p.state.ToString(), p.percentage);
                     Debug.WriteLine("Deployment progress: " + p.state + " " + p.percentage + "%");
                 }));
-              
             };
-            t.Completed += (v, p) => {
+            t.Completed += (v, p) =>
+            {
                 if (p == AsyncStatus.Error)
                 {
-                    Task.Run((() =>
-                    {
-                        callback.result_callback(p, new Exception(v.GetResults().ErrorText));
-                    }));
+                    Task.Run((() => { callback.result_callback(p, new Exception(v.GetResults().ErrorText)); }));
                     Debug.WriteLine("Deployment failed: " + v.GetResults().ErrorText);
                     src.SetException(new Exception("Deployment failed: " + v.GetResults().ErrorText));
                 }
@@ -235,6 +252,7 @@ namespace BedrockLauncher.Core
             };
             await src.Task;
         }
+
         /// <summary>
         /// 启动游戏 如果你要切换你安装的游戏请在调用次函数前调用ChangeVersion函数
         /// </summary>
@@ -242,12 +260,13 @@ namespace BedrockLauncher.Core
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Registry))]
         public bool LaunchGame(VersionType type)
         {
-            var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(type switch {
+            var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(type switch
+            {
                 VersionType.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
                 VersionType.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
                 VersionType.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
             }).AsTask().Result;
-            if (appDiagnosticInfos.Count!=0)
+            if (appDiagnosticInfos.Count != 0)
             {
                 appDiagnosticInfos[0].LaunchAsync();
                 return true;
@@ -257,6 +276,7 @@ namespace BedrockLauncher.Core
                 return false;
             }
         }
+
         /// <summary>
         /// 关闭游戏
         /// </summary>
@@ -270,6 +290,7 @@ namespace BedrockLauncher.Core
                 Console.WriteLine();
             }
         }
+
         /// <summary>
         /// 删除游戏
         /// </summary>
@@ -277,26 +298,27 @@ namespace BedrockLauncher.Core
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
         public void RemoveGame(VersionType type)
         {
-           
-                var packageManager = new PackageManager();
-                var packages = packageManager.FindPackagesForUser("");
-                
-                foreach (var package in packages)
-                {
-                    if (package.Id.FamilyName == type switch
-                        {
-                            VersionType.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
-                            VersionType.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
-                            VersionType.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
-                        })
+
+            var packageManager = new PackageManager();
+            var packages = packageManager.FindPackagesForUser("");
+
+            foreach (var package in packages)
+            {
+                if (package.Id.FamilyName == type switch
                     {
-                        
-                        packageManager.RemovePackageAsync(
-                            package.Id.FullName,
-                            RemovalOptions.PreserveApplicationData).AsTask().Wait();
-                    }
+                        VersionType.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
+                        VersionType.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
+                        VersionType.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
+                    })
+                {
+
+                    packageManager.RemovePackageAsync(
+                        package.Id.FullName,
+                        RemovalOptions.PreserveApplicationData).AsTask().Wait();
                 }
+            }
         }
+
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
         public void RemoveGameClearly(VersionType type)
         {
