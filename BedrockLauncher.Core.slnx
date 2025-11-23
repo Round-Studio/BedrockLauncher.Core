@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BedrockLauncher.Core.StartUp/BedrockLauncher.Core.StartUp.csproj" />
+  <Project Path="BedrockLauncher.Core/BedrockLauncher.Core.csproj" />
+</Solution>

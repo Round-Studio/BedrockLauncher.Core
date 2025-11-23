@@ -1,6 +1,5 @@
 # BedrockLauncher.Core
 A Minecraft Bedrock Launch Core
-下载协议版本 https://github.com/Open-MBC/MineCraft-Bedrock-Download-Protocol
 # 关于核心
 ---
 
@@ -12,14 +11,13 @@ A Minecraft Bedrock Launch Core
  📦 可通过 NuGet 安装核心库：[BedrockLauncher.Core](https://www.nuget.org/packages/BedrockLauncher.Core/)
 
  ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![.NET](https://img.shields.io/badge/.NET-8.0%2B-orange)](https://dotnet.microsoft.com/download)
+[![.NET](https://img.shields.io/badge/.NET-10.0%2B-orange)](https://dotnet.microsoft.com/download)
 ---
 
 ## 📌 简介
 
-`BedrockLauncher.Core` 是一个轻量级、高性能的 .NET 库，专为 **Minecraft Bedrock（UWP 版）** 的版本管理而设计。它允许第三方启动器实现以下功能：
+`BedrockLauncher.Core` 是一个轻量级、高性能的 .NET 库，专为 **Minecraft Bedrock** 的版本管理而设计。它允许第三方启动器实现以下功能：
 > [!WARNING]  
-> 本项目提供的多为同步函数。  
 > 必须以 **管理员权限** 运行程序，否则无法访问系统资源或正常启动。
 
 - ✅ 自动下载并安装指定版本的 Minecraft
@@ -37,7 +35,7 @@ A Minecraft Bedrock Launch Core
 
 | 功能 | 说明 |
 |------|------|
-| 📦 版本安装 | 下载并注册 Minecraft UWP 包 |
+| 📦 版本安装 | 下载并注册 Minecraft 包 |
 | 🔁 版本切换 | 支持多个版本共存与快速切换 |
 | ▶️ 游戏启动 | 调用系统协议启动指定版本 |
 | ⏹️ 游戏关闭 | 安全终止运行中的游戏进程 |
@@ -124,9 +122,9 @@ bedrockCore.LaunchGame(VersionType.Preview);
 
 ## 🛠️ 技术栈
 
-- **语言**：C# 9.0+
-- **平台**：Windows 10 / 11（UWP）
-- **框架**：.NET 8+
+- **语言**：C# 14.0+
+- **平台**：Windows 10 / 11
+- **框架**：.NET 10+
 - **依赖**：
   - `Windows.Management.Deployment`（应用部署）
   - `System.Threading.Tasks`

@@ -5,52 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <PublishTrimmed>false</PublishTrimmed>
-	  <Title>BedrockLauncher.Core</Title>
-	  <Authors>Round Studio</Authors>
-	  <Company>Round Studio</Company>
-	  <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
-	  <Product>BedrockLauncher.Core</Product>
-	  <Description>Minecraft Bedrock Installer and Launcher</Description>
-	  <Copyright>Minecraft for Microsoft and Mojang Studio</Copyright>
-	  <RepositoryUrl>https://github.com/Round-Studio/BedrockLauncher.Core</RepositoryUrl>
-	  <Version>$([System.DateTime]::Now.ToString(yy.MM.dd.HHmm))</Version>
-	  <PackageProjectUrl>https://github.com/Round-Studio/BedrockLauncher.Core</PackageProjectUrl>
-	  <PackageLicenseUrl>https://mit-license.org/</PackageLicenseUrl>
-	  <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-	  <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
-	<PropertyGroup>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-	</PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>False</Optimize>
-    <DebugType>embedded</DebugType>
-    <Deterministic>True</Deterministic>
-    <IsAotCompatible>True</IsAotCompatible>
-    <IsTrimmable>False</IsTrimmable>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Optimize>False</Optimize>
-    <DebugType>embedded</DebugType>
-    <Deterministic>True</Deterministic>
-    <IsAotCompatible>True</IsAotCompatible>
-    <IsTrimmable>False</IsTrimmable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>embedded</DebugType>
-    <Deterministic>True</Deterministic>
-    <IsAotCompatible>True</IsAotCompatible>
-    <IsTrimmable>False</IsTrimmable>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DebugType>embedded</DebugType>
-    <Deterministic>True</Deterministic>
-    <IsAotCompatible>True</IsAotCompatible>
-    <IsTrimmable>False</IsTrimmable>
-  </PropertyGroup>
 </Project>
