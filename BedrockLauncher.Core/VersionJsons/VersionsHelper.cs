@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using BedrockLauncher.Core.SoureGenerate;
 
-namespace BedrockLauncher.Core.VersionJsonHanle;
+namespace BedrockLauncher.Core.VersionJsons;
 
 public static class VersionsHelper
 {

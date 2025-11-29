@@ -44,7 +44,7 @@ public class UwpRegister
 	/// <param name="config">Deployment configuration options</param>
 	/// <returns>Deployment result containing operation status</returns>
 	[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
-	public async Task<DeploymentResult> RegisterAppxAsync(DeploymentOptionsConfig config)
+	public static async Task<DeploymentResult> RegisterAppxAsync(DeploymentOptionsConfig config)
 	{
 		ValidateConfig(config);
 		var manager = new PackageManager();
@@ -87,7 +87,7 @@ public class UwpRegister
 
 			return await asyncOperation.AsTask(linkedCts.Token, config.ProgressCallback);
 		}
-
+		
 		return await asyncOperation.AsTask(config.CancellationToken, config.ProgressCallback);
 	}
 

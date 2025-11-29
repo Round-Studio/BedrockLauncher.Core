@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BedrockLauncher.Core.StartUp": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

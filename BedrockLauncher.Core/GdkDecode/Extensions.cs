@@ -7,7 +7,7 @@ internal static class Extensions
 {
 	public static unsafe T GetstructFromBytes<T>(ReadOnlySpan<byte> bytes) where T : struct
 	{
-		var size = Unsafe.SizeOf<T>();
+		var size = Marshal.SizeOf<T>();
 		if (bytes.Length < size)
 			throw new ArgumentException("Bytes out of length");
 
@@ -16,6 +16,22 @@ internal static class Extensions
 			return Marshal.PtrToStructure<T>((IntPtr)ptr);
 		}
 		
+	}
+	public static unsafe T[] GetstructArraysFromBytes<T>(ReadOnlySpan<byte> bytes,long counts) where T : struct
+	{
+		var size = Marshal.SizeOf(typeof(T));
+		if (bytes.Length < size*counts)
+			throw new ArgumentException("Bytes out of length");
+
+		fixed (byte* ptr = bytes)
+		{
+			var TAry = new T[counts];
+			for (int i = 0; i < counts; i++)
+			{
+				TAry[i] = Marshal.PtrToStructure<T>((IntPtr)ptr+size*i);
+			}
+			return TAry;
+		}
 	}
 	public static ulong GetPageOffset(ulong soureUlong)
 	{

@@ -1,11 +1,11 @@
 namespace BedrockLauncher.Core.GdkDecode;
 
-public readonly struct CikKey
+public class CikKey
 {
 	public const byte MaxSize = 0x30;
 	public readonly Guid Guid;
-	public readonly byte[] TKey;
-	public readonly byte[] DKey;
+	public  byte[] TKey;
+	public  byte[] DKey;
 
 	public CikKey(ReadOnlySpan<byte> cik)
 	{
