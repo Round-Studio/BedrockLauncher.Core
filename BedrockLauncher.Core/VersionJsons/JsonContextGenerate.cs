@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace BedrockLauncher.Core.SoureGenerate;
 
@@ -16,6 +17,7 @@ namespace BedrockLauncher.Core.SoureGenerate;
 [JsonSerializable(typeof(MinecraftBuildTypeVersion))]
 [JsonSerializable(typeof(MinecraftGameTypeVersion))]
 [JsonSerializable(typeof(Dictionary<string, BuildInfo>))]
+[JsonSerializable(typeof(Architecture))]
 public partial class BuildDatabaseContext : JsonSerializerContext
 {
 }

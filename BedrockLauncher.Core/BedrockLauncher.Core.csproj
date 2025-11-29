@@ -7,4 +7,12 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="dotnet fsi BuildChain/BuilderBefore.fsx" />
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="dotnet fsi BuildChain/BuilderAfter.fsx" />
+  </Target>
+
 </Project>

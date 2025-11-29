@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BedrockLauncher.Core;
@@ -49,7 +50,9 @@ public class BuildInfo
 
 public class Variation
 {
-	[JsonPropertyName("Arch")] public string Arch { get; set; } = string.Empty;
+	[JsonPropertyName("Arch")]
+	[JsonConverter(typeof(ArchitectureJsonConverter))]
+	public Architecture Arch { get; set; }
 
 	[JsonPropertyName("ArchivalStatus")] public int ArchivalStatus { get; set; }
 

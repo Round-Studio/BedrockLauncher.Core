@@ -7,71 +7,15 @@ namespace BedrockLauncher.Core.GdkDecode;
 
 public class MsiXVDDecoder
 {
-	private Vector128<byte> dkeysVector128;
-	private Vector128<byte> tkeysVector128;
-	public ref readonly ReadOnlySpan<Vector128<byte>> RDKeys
+	public KeySinagl d;
+	public KeySinagl t;
+
+	public MsiXVDDecoder(CikKey key)
 	{
-		get
-		{
-			ref var start = ref Unsafe.AsRef(in dkeysVector128);
-			var span = MemoryMarshal.CreateReadOnlySpan(ref start, 11);
-			return ref Unsafe.AsRef(in span);
-		}
-	}
-	public ref readonly ReadOnlySpan<Vector128<byte>> RTKeys
-	{
-		get
-		{
-			ref var start = ref Unsafe.AsRef(in tkeysVector128);
-			var span = MemoryMarshal.CreateReadOnlySpan(ref start, 11);
-			return ref Unsafe.AsRef(in span);
-		}
+		d.Init(key.DKey,true);
+		t.Init(key.TKey,false);
 	}
 
-	public MsiXVDDecoder(in CikKey key)
-	{
-		InitKey(key.DKey,ref dkeysVector128,true);
-		InitKey(key.TKey,ref tkeysVector128,false);
-
-	}
-	private void InitKey(ReadOnlySpan<byte> bytes,ref Vector128<byte> keyVector128,bool isDecrypt)
-	{
-		Span<Vector128<byte>> Keys = MemoryMarshal.CreateSpan(ref keyVector128, 11);
-		var curKey = Unsafe.ReadUnaligned<Vector128<byte>>(ref MemoryMarshal.GetReference(bytes));
-		Keys[0] = curKey;
-
-		ReadOnlySpan<byte> rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36];
-
-		for (int i = 0; i < 10; i++)
-		{
-			curKey = KeyExpansionCore(curKey, Aes.KeygenAssist(curKey, rcon[i]));
-			Keys[i + 1] = curKey;
-		}
-
-		if (isDecrypt)
-		{
-			ApplyInverseMixColumns(Keys);
-		}
-	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static Vector128<byte> KeyExpansionCore(Vector128<byte> curk, Vector128<byte> recon)
-	{
-		var result = curk;
-		var rotated = Sse2.Shuffle(recon.AsUInt32(), 0xFF).AsByte();
-
-		result = Sse2.Xor(result, Sse2.ShiftLeftLogical128BitLane(result, 4));
-		result = Sse2.Xor(result, Sse2.ShiftLeftLogical128BitLane(result, 8));
-
-		return Sse2.Xor(result, rotated);
-	}
-
-	private static void ApplyInverseMixColumns(Span<Vector128<byte>> roundKeys)
-	{
-		for (int i = 1; i <= 9; i++)
-		{
-			roundKeys[i] = Aes.InverseMixColumns(roundKeys[i]);
-		}
-	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Vector128<byte> Gf128Mul(Vector128<byte> iv, Vector128<byte> mask)
 	{
@@ -106,9 +50,8 @@ public class MsiXVDDecoder
 		ref Vector128<byte> outBlock = ref Unsafe.As<byte, Vector128<byte>>(ref MemoryMarshal.GetReference(output));
 
 		Vector128<byte> mask = Vector128.Create(0x87, 1).AsByte();
-		Vector128<byte> tweak = EncryptUnrolled(iv,RTKeys);
+		Vector128<byte> tweak = t.EncryptUnrolled(iv);
 
-		// 处理8个块一组的批量解密
 		while (remainingBlocks > 7)
 		{
 			Vector128<byte> tweak1 = Gf128Mul(tweak, mask);
@@ -146,11 +89,10 @@ public class MsiXVDDecoder
 			remainingBlocks -= 8;
 		}
 
-		// 处理剩余的单块
 		while (remainingBlocks > 0)
 		{
 			Vector128<byte> tmp = Sse2.Xor(inBlock, tweak);
-			tmp = DecryptBlockUnrolled(tmp, RDKeys);
+			tmp = d.DecryptBlockUnrolled(tmp);
 			outBlock = Sse2.Xor(tmp, tweak);
 
 			tweak = Gf128Mul(tweak, mask);
@@ -159,79 +101,41 @@ public class MsiXVDDecoder
 			remainingBlocks--;
 		}
 
-		// 处理部分块（如果存在）- 移除 Buffer16
 		if (leftover != 0)
 		{
 			Vector128<byte> finalTweak = Gf128Mul(tweak, mask);
 
 			Vector128<byte> tmp = Sse2.Xor(inBlock, finalTweak);
-			tmp = DecryptBlockUnrolled(tmp,RDKeys);
+			tmp = d.DecryptBlockUnrolled(tmp);
 			outBlock = Sse2.Xor(tmp, finalTweak);
 
-			// 直接使用字节Span操作，移除Buffer16
 			Span<byte> currentOutBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref outBlock, 1));
 			Span<byte> nextInBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref inBlock, 1), 1));
 			Span<byte> nextOutBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref outBlock, 1), 1));
 
-			// 使用stackalloc创建临时缓冲区
 			Span<byte> temp = stackalloc byte[16];
 
-			// 复制部分数据
 			for (int i = 0; i < leftover; i++)
 			{
 				nextOutBytes[i] = currentOutBytes[i];
 				temp[i] = nextInBytes[i];
 			}
 
-			// 填充剩余字节
 			for (int i = leftover; i < 16; i++)
 			{
 				temp[i] = currentOutBytes[i];
 			}
 
-			// 处理临时数据
 			tmp = Unsafe.ReadUnaligned<Vector128<byte>>(ref temp[0]);
 			tmp = Sse2.Xor(tmp, tweak);
-			tmp = DecryptBlockUnrolled(tmp,RDKeys);
+			tmp = d.DecryptBlockUnrolled(tmp);
 			outBlock = Sse2.Xor(tmp, tweak);
 		}
 
 		return length;
 	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Vector128<byte> EncryptUnrolled(Vector128<byte> input,ReadOnlySpan<Vector128<byte>> keysvVector128)
-	{
-		ReadOnlySpan<Vector128<byte>> keys = keysvVector128;
-
-		Vector128<byte> state = Sse2.Xor(input, keys[0]);
-		state = Aes.Encrypt(state, keys[1]);
-		state = Aes.Encrypt(state, keys[2]);
-		state = Aes.Encrypt(state, keys[3]);
-		state = Aes.Encrypt(state, keys[4]);
-		state = Aes.Encrypt(state, keys[5]);
-		state = Aes.Encrypt(state, keys[6]);
-		state = Aes.Encrypt(state, keys[7]);
-		state = Aes.Encrypt(state, keys[8]);
-		state = Aes.Encrypt(state, keys[9]);
-		return Aes.EncryptLast(state, keys[10]);
-	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public  Vector128<byte> DecryptBlockUnrolled(Vector128<byte> input,ReadOnlySpan<Vector128<byte>> keysvVector128)
-	{
-		ReadOnlySpan<Vector128<byte>> keys = keysvVector128;
-
-		Vector128<byte> state = Sse2.Xor(input, keys[10]);
-		state = Aes.Decrypt(state, keys[9]);
-		state = Aes.Decrypt(state, keys[8]);
-		state = Aes.Decrypt(state, keys[7]);
-		state = Aes.Decrypt(state, keys[6]);
-		state = Aes.Decrypt(state, keys[5]);
-		state = Aes.Decrypt(state, keys[4]);
-		state = Aes.Decrypt(state, keys[3]);
-		state = Aes.Decrypt(state, keys[2]);
-		state = Aes.Decrypt(state, keys[1]);
-		return Aes.DecryptLast(state, keys[0]);
-	}
+	
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public  void DecryptBlocks8(
 		Vector128<byte> in0,
@@ -251,7 +155,7 @@ public class MsiXVDDecoder
 		out Vector128<byte> out6,
 		out Vector128<byte> out7)
 	{
-		ReadOnlySpan<Vector128<byte>> keys = RDKeys;
+		ReadOnlySpan<Vector128<byte>> keys = d.RKeys;
 
 		Vector128<byte> key = keys[10];
 		Vector128<byte> b0 = Sse2.Xor(in0, key);
