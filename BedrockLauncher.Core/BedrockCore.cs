@@ -127,7 +127,7 @@ namespace BedrockLauncher.Core
             }
             catch (Exception e)
             {
-                throw;
+                throw e;
             }
 
             return string.Empty;
@@ -161,7 +161,7 @@ namespace BedrockLauncher.Core
             }
             catch (Exception e)
             {
-                throw;
+                throw e;
             }
         }
 
