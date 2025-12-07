@@ -15,7 +15,7 @@ public static class VersionsHelper
 	/// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
 	/// <returns>A task that represents the asynchronous operation. The task result contains the deserialized build database.</returns>
 	/// <exception cref="BedrockCoreException">Thrown if an error occurs while retrieving or deserializing the build database.</exception>
-	public static async Task<BuildDatabase> GetBuildDatabaseAsync(string httpAddress,
+	public static async Task<BuildDatabase?> GetBuildDatabaseAsync(string httpAddress,
 		CancellationToken cancellationToken = new())
 	{
 		try

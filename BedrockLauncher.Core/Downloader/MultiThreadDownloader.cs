@@ -32,7 +32,7 @@ public class MultiThreadDownloader
 		string url,
 		string outputPath,
 		int threadCount = 4,
-		IProgress<DownloadProgress> progress = null,
+		IProgress<DownloadProgress>? progress = null,
 		CancellationToken cancellationToken = default,
 		int maxRetry = 3,
 		int retryDelayMs = 2000)
@@ -201,10 +201,10 @@ public class MultiThreadDownloader
 
 	private async Task DownloadRangeToFileWithRetryAsync(
 		string url, long from, long to, string tempFile, CancellationToken cancellationToken,
-		Action<long> onRead = null, int maxRetry = 3, int retryDelayMs = 2000)
+		Action<long>? onRead = null, int maxRetry = 3, int retryDelayMs = 2000)
 	{
 		int attempt = 0;
-		Exception lastException = null;
+		Exception? lastException = null;
 
 		while (attempt < maxRetry)
 		{
@@ -229,7 +229,7 @@ public class MultiThreadDownloader
 	}
 
 	private async Task DownloadRangeToFileAsync(
-		string url, long from, long to, string tempFile, CancellationToken cancellationToken, Action<long> onRead = null)
+		string url, long from, long to, string tempFile, CancellationToken cancellationToken, Action<long>? onRead = null)
 	{
 		var request = new HttpRequestMessage(HttpMethod.Get, url);
 		request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(from, to);

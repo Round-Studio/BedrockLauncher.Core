@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
+#region Auto Generate
 namespace BedrockLauncher.Core.GdkDecode
 {
 	public enum UserDataType : UInt32
@@ -38,3 +39,4 @@ namespace BedrockLauncher.Core.GdkDecode
 		public UInt32 Offset;
 	}
 }
+#endregion

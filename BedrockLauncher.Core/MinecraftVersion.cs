@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS8509
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -55,8 +56,6 @@ public class ArchitectureJsonConverter : JsonConverter<Architecture>
 			string? stringValue = reader.GetString();
 			if (string.IsNullOrEmpty(stringValue))
 				return 0;
-
-			// 处理各种可能的字符串表示形式
 			return stringValue.ToLowerInvariant() switch
 			{
 				"x64" or "x86_64" or "amd64" => Architecture.X64,

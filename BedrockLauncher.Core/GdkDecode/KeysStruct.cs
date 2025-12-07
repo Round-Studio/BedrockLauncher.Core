@@ -72,10 +72,12 @@ namespace BedrockLauncher.Core.GdkDecode
 			roundKeys[0] = Unsafe.ReadUnaligned<Vector128<byte>>(ref MemoryMarshal.GetReference(keyBytes));
 			for (int round = 0; round < rounds; round++)
 			{
+#pragma warning disable CA1857 
 				roundKeys[round + 1] = KeyExpansion(
 					roundKeys[round],
 					Aes.KeygenAssist(roundKeys[round], rconConstants[round])
 				);
+#pragma warning restore CA1857 
 			}
 			if (isDecryption)
 			{

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace BedrockLauncher.Core.GdkDecode
-{
+namespace BedrockLauncher.Core.GdkDecode;
+
+#region Auto Generate
+
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1, Size = 0x10)]
 	public  struct SegmentsAbout
 	{
@@ -46,4 +48,8 @@ namespace BedrockLauncher.Core.GdkDecode
 
 		public byte[] Unknown;
 	}
-}
+
+
+
+
+	#endregion

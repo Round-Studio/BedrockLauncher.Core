@@ -90,7 +90,42 @@ public class UwpRegister
 		
 		return await asyncOperation.AsTask(config.CancellationToken, config.ProgressCallback);
 	}
+	public static bool CheckForPackageVersion(string packageName, string version)
+	{
+		PackageManager packageManager = new PackageManager();
 
+		foreach (var package in packageManager.FindPackages())
+		{
+			if (package.Id.Name == packageName)
+			{
+				var currentVersion = $"{package.Id.Version.Major}.{package.Id.Version.Minor}.{package.Id.Version.Build}.{package.Id.Version.Revision}";
+
+				if (currentVersion == version)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	public static bool IsPackageInstalled(string packageName)
+	{
+		if (string.IsNullOrWhiteSpace(packageName))
+			throw new ArgumentException("Package name cannot be null or empty", nameof(packageName));
+
+		PackageManager packageManager = new PackageManager();
+
+		foreach (var package in packageManager.FindPackages())
+		{
+			if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 	private static void ValidateConfig(DeploymentOptionsConfig config)
 	{
 		if (string.IsNullOrWhiteSpace(config.PackagePath))

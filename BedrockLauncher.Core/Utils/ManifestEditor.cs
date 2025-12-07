@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable
+//Ojang's UWP XML is fixed so dis able warning
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;

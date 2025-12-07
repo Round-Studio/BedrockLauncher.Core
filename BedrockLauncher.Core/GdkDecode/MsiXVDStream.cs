@@ -1,3 +1,4 @@
+#pragma warning disable
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
@@ -45,10 +46,8 @@ public class MsiXVDStream : IDisposable
 			throw new FileNotFoundException("Can't found the file");
 		XvdFileStream = File.Open(fileUri, FileMode.Open, FileAccess.ReadWrite);
 		Reader = new BinaryReader(XvdFileStream);
-		Parse();
-		
 	}
-	private void Parse()
+	public void Parse()
 	{
 		XvdFileStream.Position = 0;
 		ParseFileHeader();
@@ -115,9 +114,8 @@ public class MsiXVDStream : IDisposable
 			{
 				binaryReader.BaseStream.Position = UserDataHeader.Length + fileEntry.Offset;
 				var fileData = new byte[fileEntry.Size];
-				bytesRead = binaryReader.BaseStream.Read(fileData.AsSpan());
-				Debug.Assert(bytesRead == fileEntry.Size, "bytesRead == fileEntry.Size");
-
+				_ = binaryReader.BaseStream.Read(fileData.AsSpan());
+			
 				UserDataPackages[fileEntry.FilePath] = fileEntry;
 				UserDataPackageContents[fileEntry.FilePath] = fileData;
 			}

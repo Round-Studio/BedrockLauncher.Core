@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace BedrockLauncher.Core.GdkDecode
-{
+#region Auto Generate
+
+namespace BedrockLauncher.Core.GdkDecode;
+
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
 	public struct XvcEncryptionKeyId
 	{
@@ -100,4 +102,8 @@ namespace BedrockLauncher.Core.GdkDecode
 		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 0x80)]
 		public string Value;
 	}
-}
+
+
+
+
+	#endregion

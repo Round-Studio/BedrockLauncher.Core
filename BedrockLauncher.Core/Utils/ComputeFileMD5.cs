@@ -36,7 +36,7 @@ namespace BedrockLauncher.Core.Utils
 					md5.TransformFinalBlock(buffer, 0, 0);
 				}
 
-				return BitConverter.ToString(md5.Hash).Replace("-", "").ToLowerInvariant();
+				return BitConverter.ToString(md5.Hash??new Byte[]{0}).Replace("-", "").ToLowerInvariant();
 			}
 		}
 	}

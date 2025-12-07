@@ -58,7 +58,7 @@ internal static class Extensions
 		entryIndexInHashBlock = 0;
 
 		if ((uint)imageType > 1 || currentHashLevel > 3)
-			return hashBlockIndex; // Invalid parameters
+			return hashBlockIndex;
 
 		if (currentHashLevel == 0)
 			entryIndexInHashBlock = dataBlockIndex % 0xAA;

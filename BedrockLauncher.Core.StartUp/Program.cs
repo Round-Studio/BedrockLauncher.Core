@@ -4,10 +4,12 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Windows.Management.Deployment;
 using BedrockLauncher.Core.CoreOption;
 using BedrockLauncher.Core.DependsComplete;
 using BedrockLauncher.Core.GdkDecode;
 using BedrockLauncher.Core.SoureGenerate;
+using BedrockLauncher.Core.Utils;
 using BedrockLauncher.Core.VersionJsons;
 
 namespace BedrockLauncher.Core.StartUp
@@ -67,101 +69,49 @@ namespace BedrockLauncher.Core.StartUp
 		}
 		static void Main(string[] args)
 		{
+
 			//var buildDatabaseAsync = VersionsHelper.GetBuildDatabaseAsync("https://data.mcappx.com/v2/bedrock.json").Result;
-			//var bedrockCore = new BedrockCore();
-			//bedrockCore.Options.IsCheckMD5 = true;
-			//var gameOnlinePackageOptions = new GameOnlinePackageOptions()
-			//{
-			//	SaveFilePath = Path.GetFullPath("./a.appx"),
-			//	BuildInfo = buildDatabaseAsync.Builds["1.21.101"],
-			//	DownloadProgress = (new Progress<DownloadProgress>((progress =>
-			//	{
-			//		PrintDownloadProgress(progress);
-			//	}))),
-			//	MaxRetryTimes = 2000
-			//};
-			//bedrockCore.GetGamePackage(gameOnlinePackageOptions).Wait();
-			//Console.WriteLine(VersionHelper111.GetUri("14d05069-3d90-457b-a8e9-9381a5055705"));
-			//var cikKey = new CikKey(File.ReadAllBytes(@"D:\Windows11\Download\1f49d63f-8bf5-1f8d-ed7e-dbd89477dad9.cik"));
-			//var msiXvdDecoder = new MsiXVDDecoder(cikKey);
-			//var msiXvdStream = new MsiXVDStream(@"D:\Windows11\Download\Microsoft.MinecraftWindowsBeta_1.21.13028.0_x64__8wekyb3d8bbwe.msixvc",msiXvdDecoder);
-			//foreach (var encryptionKey in msiXvdStream.EncryptionKeys)
-			//{
-			//	Console.WriteLine(encryptionKey);
-			//}
+			var bedrockCore = new BedrockCore();
+			var options = new LocalGamePackageOptions()
+			{
+				FileFullPath = Path.GetFullPath(@"C:\Users\Administrator\AppData\Roaming\RoundStudio\BedrockBoot\Bedrock_Data\Appx\1.21.12020.appx"),
+				Type = MinecraftBuildTypeVersion.UWP,
+				GameTypeVersion = MinecraftGameTypeVersion.Preview,
+				ExtractionProgress = (new Progress<DecompressProgress>((progress =>
+				{
+					double percentage = progress.TotalCount > 0
+						? (double)progress.CurrentCount / progress.TotalCount * 100
+						: 0;
 
-			//msiXvdStream.ExtractTaskAsync(Path.GetFullPath("./Test4"),new Progress<DecompressProgress>((progress =>
-			//{
-			//	// 计算百分比
-			//	double percentage = progress.TotalCount > 0
-			//		? (double)progress.CurrentCount / progress.TotalCount * 100
-			//		: 0;
+					// 创建进度条
+					int barWidth = 50;
+					int progressBars = progress.TotalCount > 0
+						? (int)((double)progress.CurrentCount / progress.TotalCount * barWidth)
+						: 0;
 
-			//	// 创建进度条
-			//	int barWidth = 50;
-			//	int progressBars = progress.TotalCount > 0
-			//		? (int)((double)progress.CurrentCount / progress.TotalCount * barWidth)
-			//		: 0;
+					string progressBar = new string('█', progressBars) +
+										 new string('░', barWidth - progressBars);
 
-			//	string progressBar = new string('█', progressBars) +
-			//	                     new string('░', barWidth - progressBars);
+					// 打印进度信息
+					Console.Write($"\r[{progressBar}] {percentage:F1}% | " +
+								  $"{progress.CurrentCount:N0}/{progress.TotalCount:N0} | " +
+								  $"{progress.FileName}");
 
-			//	// 打印进度信息
-			//	Console.Write($"\r[{progressBar}] {percentage:F1}% | " +
-			//	              $"{progress.CurrentCount:N0}/{progress.TotalCount:N0} | " +
-			//	              $"{progress.FileName}");
-
-			//	// 如果完成，换行
-			//	if (progress.CurrentCount >= progress.TotalCount)
-			//	{
-			//		Console.WriteLine();
-			//	}
-			//})));
-			//Console.ReadLine();
-			//PrintBuildInfo(buildDatabaseAsync);
-			//var downloader = new MultiThreadDownloader();
-			//string url = "http://assets1.xboxlive.cn/12/66b02bc1-c4f1-4986-a183-c23e00cccecb/98bd2335-9b01-4e4c-bd05-ccc01614078b/1.21.12021.0.e5cfeb9c-2eaa-4959-8a49-e82cde29702a/Microsoft.MinecraftWindowsBeta_1.21.12021.0_x64__8wekyb3d8bbwe.msixvc";
-			//var cts = new CancellationTokenSource();
-			//var progress = new Progress<DownloadProgress>(p =>
-			//{
-			//	string stage = p.Phase switch
-			//	{
-			//		DownloadStage.Downloading => "Downloading",
-			//		DownloadStage.Merging => "Merging",
-			//		DownloadStage.Merged => "Merged",
-			//		_ => "Unknown"
-			//	};
-			//	double completedMB = p.FinishedBytes / 1024.0 / 1024.0;
-			//	double totalMB = p.TotalBytes / 1024.0 / 1024.0;
-			//	double speedMB = p.Speed / 1024.0 / 1024.0;
-			//	Console.WriteLine($"{stage} Progress: {(p.Progress * 100):F2}% " +
-			//	                  $"Done: {completedMB:F2}MB/{totalMB:F2}MB " +
-			//	                  $"Speed: {speedMB:F2} MB/s");
-			//});
-
-			//downloader.DownloadFileAsync(
-			//	url,
-			//	"a.a",
-			//	threadCount: 4,
-			//	progress: progress,
-			//	cancellationToken: cts.Token,
-			//	maxRetry: 5,
-			//	retryDelayMs: 3000
-			//);
-
-			//while (true)
-			//{
-			//	var readLine = Console.ReadLine();
-			//	if (readLine == "stop")
-			//	{
-			//		cts.Cancel();
-			//	}
-
-			//	if (readLine == "exit")
-			//	{
-			//		return;
-			//	}
-			//}
+					// 如果完成，换行
+					if (progress.CurrentCount >= progress.TotalCount)
+					{
+						Console.WriteLine();
+					}
+				}))),
+				InstallDstFolder = Path.GetFullPath("./rr4")
+			};
+			options.DeployProgress = new Progress<DeploymentProgress>((progress =>
+			{
+				Console.WriteLine(progress.percentage + progress.state.ToString());
+			}));
+			var installResult = bedrockCore.InstallPackageAsync(options).Result;
+			Console.WriteLine(installResult.DeploymentResult?.IsRegistered);
+			Console.WriteLine(installResult.DeploymentResult?.ErrorText);
 		}
 		static void PrintBuildInfo(BuildDatabase buildData)
 		{

@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Microsoft.VisualBasic;
 
+#region Auto Generate
 namespace BedrockLauncher.Core.GdkDecode;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -113,7 +114,7 @@ public struct MsiXVDHeader
 	public ulong NumberOfHashedPages => DrivePageCount + UserDataPageCount + XvcInfoPageCount + DynamicHeaderPageCount;
 	public ulong NumberOfMetadataPages => UserDataPageCount + XvcInfoPageCount + DynamicHeaderPageCount;
 }
-
+#endregion
 #region Generated from cxx
 
 public struct ExtEntry
