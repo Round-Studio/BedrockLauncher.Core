@@ -1,47 +1,74 @@
-
-
 name: .NET Core Desktop
 
 on:
   push:
-    branches: [ "2.0-main" ]
+    branches: ["2.0-main"]
   pull_request:
-    branches: [ "2.0-main" ]
+    branches: ["2.0-main"]
 
 jobs:
-
   build:
-
     strategy:
       matrix:
         configuration: [Release]
 
-    runs-on: windows-latest 
+    runs-on: windows-latest
 
     env:
       PRE_MC_KEY: ${{ secrets.PRE_MC_KEY }}
       REL_MC_KEY: ${{ secrets.REL_MC_KEY }}
-      
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
 
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Launch Build
-      run: dotnet build BedrockLauncher.Core -c Release --runtime win-x64
-      
-    - name: Publish BedrockLauncher.Core
-      uses: brandedoutcast/publish-nuget@v2.5.2
-      with: 
-        PROJECT_FILE_PATH: BedrockLauncher.Core/BedrockLauncher.Core.csproj
-        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+      - name: Launch Build
+        run: dotnet build BedrockLauncher.Core -c Release --runtime win-x64
 
+      - name: Extract and Set Version from Release Config
+        run: |
+          $csprojPath = 'BedrockLauncher.Core/BedrockLauncher.Core.csproj'
+          $content = Get-Content $csprojPath -Raw
+          
+          # First attempt to extract version from Release configuration
+          # Pattern matches: <PropertyGroup Condition="'$(Configuration)' == 'Release'"> ... <Version>xxx</Version>
+          $pattern = 'Condition\s*=\s*["'']\s*''\$\(Configuration\)''\s*==\s*''Release''\s*["''][^>]*>[\s\S]*?<Version>([^<]+)</Version>'
+          
+          if ($content -match $pattern) {
+            $version = $matches[1].Trim()
+            Write-Host "Extracted version from Release configuration: $version"
+          } else {
+            # Throw error if Release configuration version is not found
+            Write-Host "ERROR: Could not find Version in Release configuration"
+            Write-Host "Please ensure your .csproj file contains:"
+            Write-Host "<PropertyGroup Condition=""'`$(Configuration)' == 'Release'"">"
+            Write-Host "  <Version>X.X.X-rc.X</Version>"
+            Write-Host "</PropertyGroup>"
+            exit 1
+          }
+          
+          # Update all Version tags
+          $updatedContent = $content -replace '<Version>[^<]*</Version>', "<Version>$version</Version>"
+          
+          # Save
+          Set-Content -Path $csprojPath -Value $updatedContent -Encoding UTF8
+          
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+          Write-Host "Version has been set to: $version"
+        shell: pwsh
+
+      - name: Publish BedrockLauncher.Core
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
+          PROJECT_FILE_PATH: BedrockLauncher.Core/BedrockLauncher.Core.csproj
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
