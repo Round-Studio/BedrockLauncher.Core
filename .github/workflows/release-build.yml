@@ -14,10 +14,9 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [Debug, Release]
+        configuration: [Release]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: windows-latest 
 
     env:
       PRE_MC_KEY: ${{ secrets.PRE_MC_KEY }}
@@ -29,17 +28,20 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Install the .NET Core workload
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
 
-    # Execute all unit tests in the solution
-    - name: try build
-      run: dotnet build
+    - name: Launch Build
+      run: dotnet build BedrockLauncher.Core -c Release --runtime win-x64
+      
+    - name: Publish BedrockLauncher.Core
+      uses: brandedoutcast/publish-nuget@v2.5.2
+      with: 
+        PROJECT_FILE_PATH: BedrockLauncher.Core/BedrockLauncher.Core.csproj
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
 
