@@ -37,7 +37,7 @@ jobs:
 
       - name: Extract and Set Version from Release Config
         run: |
-          $csprojPath = 'BedrockLauncher.Core/BedrockLauncher.Core.csproj'
+          $csprojPath = 'BedrockLauncher.Core/BedrockLauncher.Core/BedrockLauncher.Core.csproj'
           $content = Get-Content $csprojPath -Raw
           
           # First attempt to extract version from Release configuration
