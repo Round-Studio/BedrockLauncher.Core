@@ -44,7 +44,10 @@ namespace BedrockLauncher.Core.CoreOption
 		/// Gets or sets the progress reporter for package registration operations
 		/// </summary>
 		public IProgress<DeploymentProgress>? RegisterProgress;
-		//public bool OpenConsole;
+		/// <summary>
+		/// Launching for old version
+		/// </summary>
+		public bool Old_VersionLaunching = false;
 	}
 
 	/// <summary>
