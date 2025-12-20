@@ -1,9 +1,14 @@
 ﻿#pragma warning disable CS8524
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using BedrockLauncher.Core.CoreOption;
@@ -12,6 +17,7 @@ using BedrockLauncher.Core.GdkDecode;
 using BedrockLauncher.Core.Utils;
 using BedrockLauncher.Core.UwpRegister;
 using Microsoft.Win32;
+using Windows.Foundation.Collections;
 using Windows.Management.Deployment;
 using Windows.System;
 
@@ -19,7 +25,6 @@ namespace BedrockLauncher.Core;
 
 public class BedrockCore
 {
-	public Lazy<MultiThreadDownloader> MultiThreadDownloader = new();
 
 	public BedrockCore()
 	{
@@ -247,7 +252,7 @@ public class BedrockCore
 			var info = new ProcessStartInfo();
 			info.FileName = Path.Combine(options.GameFolder, "Minecraft.Windows.exe");
 			info.Arguments = options.LaunchArgs;
-			info.UseShellExecute = true;
+			info.UseShellExecute = false;
 			info.CreateNoWindow = true;
 			process.StartInfo = info;
 			process.Start();
@@ -257,6 +262,18 @@ public class BedrockCore
 		if (options.MinecraftBuildType == MinecraftBuildTypeVersion.UWP)
 		{
 			string manifest = Path.Combine(options.GameFolder, "AppxManifest.xml");
+			string packageFamily = options.GameType switch
+			{
+				MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
+				MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
+				MinecraftGameTypeVersion.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
+			};
+			string packageName = options.GameType switch
+			{
+				MinecraftGameTypeVersion.Beta => "Microsoft.MinecraftWindowsBeta",
+				MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP",
+				MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta"
+			};
 			if (!File.Exists(manifest))
 			{
 				throw new IOException("File doesn't exist");
@@ -265,12 +282,7 @@ public class BedrockCore
 			bool twice_launch = false;
 			foreach (var package in packageManager.FindPackages())
 			{
-				if (package.Id.Name.Equals(options.GameType switch
-				    {
-					    MinecraftGameTypeVersion.Beta => "Microsoft.MinecraftWindowsBeta",
-					    MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP",
-					    MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta"
-				    }, StringComparison.OrdinalIgnoreCase))
+				if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
 				{
 					if (Path.GetFullPath(package.InstalledPath) == Path.GetFullPath(options.GameFolder))
 					{
@@ -278,12 +290,7 @@ public class BedrockCore
 					}
 				}
 			}
-			bool is_installed = UwpRegister.UwpRegister.IsPackageInstalled(options.GameType switch
-			{
-				MinecraftGameTypeVersion.Beta => "Microsoft.MinecraftWindowsBeta",
-				MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP",
-				MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta"
-			});
+			bool is_installed = UwpRegister.UwpRegister.IsPackageInstalled(packageName);
 			var config = new DeploymentOptionsConfig();
 			options.Progress?.Report(LaunchState.Registering);
 			config.CancellationToken = options.CancellationToken.GetValueOrDefault();
@@ -302,64 +309,41 @@ public class BedrockCore
 				}
 			}
 
-			var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(options.GameType switch
+			if (options.Old_VersionLaunching)
 			{
-				MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
-				MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe",
-				MinecraftGameTypeVersion.Beta => "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
-			}).AsTask().Result;
-			if (appDiagnosticInfos.Count != 0)
-			{
-				 await appDiagnosticInfos[0].LaunchAsync();
-				 
-				 Process[] processes = Process.GetProcessesByName("Minecraft.Windows");
-				 processes.OrderBy(p => p.StartTime);
-				 process = processes.Last();
+				var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(packageFamily).AsTask().Result;
+				if (appDiagnosticInfos.Count != 0)
+				{
+					 await appDiagnosticInfos[0].LaunchAsync();
+				}
 			}
+			else
+			{
+				var options_st = new LauncherOptions
+				{
+					TargetApplicationPackageFamilyName = packageFamily
+				};
+				if (options.LaunchArgs != null)
+				{
+					await Launcher.LaunchUriAsync(new Uri(options.LaunchArgs), options_st);
+				}
+				else
+				{
+					await Launcher.LaunchUriAsync(new Uri("minecraft://launch"), options_st);
+				}
+				
+			}
+			Process[] processes = Process.GetProcessesByName("Minecraft.Windows");
+			process = processes.OrderBy(p => p.StartTime).Last();
 		}
 		return process;
-	}
-	/// <summary>
-	/// Downloads and validates a game package based on the provided online package options
-	/// </summary>
-	/// <param name="gamePackage">The online package options containing build info, architecture, and download settings</param>
-	/// <returns>The build type version of the downloaded game package</returns>
-	/// <exception cref="BedrockCoreException">Thrown when the specified architecture version is not found</exception>
-	/// <exception cref="BedrockCoreNoAvailbaleVersionUri">Thrown when no available download URI is found</exception>
-	/// <exception cref="WebException">Thrown when the downloaded file fails MD5 validation</exception>
-	public async Task<MinecraftBuildTypeVersion> GetGamePackage(GameOnlinePackageOptions gamePackage)
-	{
-		Architecture devicesArch = gamePackage.Architecture.HasValue ? gamePackage.Architecture.Value : RuntimeInformation.OSArchitecture;
-
-		var find = gamePackage.BuildInfo.Variations.Find((variation => variation.Arch == devicesArch));
-		if (find == null)
-			throw new BedrockCoreException($"Unable to find {devicesArch} Version");
-		if (find.MetaData.Count == 0)
-			throw new BedrockCoreNoAvailbaleVersionUri("There is no available Uri to download");
-		await MultiThreadDownloader.Value.DownloadFileAsync(
-			await GetPackageUri(find.MetaData.Last()),
-			gamePackage.SaveFilePath,
-			gamePackage.DownloadThread.HasValue ? gamePackage.DownloadThread.Value : 4,
-			gamePackage.DownloadProgress ?? new Progress<DownloadProgress>(),
-			gamePackage.CancellationToken.HasValue ? gamePackage.CancellationToken.Value : default(CancellationToken),
-			gamePackage.MaxRetryTimes.HasValue ? gamePackage.MaxRetryTimes.Value : 3
-			);
-		if (Options.IsCheckMD5)
-		{
-			var fileMd5 = await ComputeFileMD5.ComputeFileMD5Async(gamePackage.SaveFilePath);
-			if (fileMd5 != find.MD5)
-			{
-				throw new WebException("Download file failed because of md5 mismatch");
-			}
-		}
-		return gamePackage.BuildInfo.BuildType;
 	}
 	/// <summary>
 	/// Remove Uwp Minecraft Game
 	/// </summary>
 	/// <param name="type"></param>
 	/// <returns></returns>
-	public async Task<DeploymentResult?> RemoveUWPGameAsync(MinecraftGameTypeVersion type)
+	public  async Task<DeploymentResult?> RemoveUWPGameAsync(MinecraftGameTypeVersion type)
 	{
 
 		var packageManager = new PackageManager();
@@ -383,13 +367,8 @@ public class BedrockCore
 
 		return null;
 	}
-	/// <summary>
-	/// Retrieves the download URI for a package based on its metadata
-	/// </summary>
-	/// <param name="metadata">The metadata string which may be a direct URI or an identifier to resolve</param>
-	/// <returns>The resolved download URI as a string</returns>
-	/// <exception cref="BedrockCoreNoAvailbaleVersionUri">Thrown when no available URI is found for the metadata</exception>
-	private static async Task<string> GetPackageUri([NotNull] string metadata)
+	
+	private  async Task<string> GetPackageUriInside([NotNull] string metadata)
 	{
 		if (metadata.StartsWith("http"))
 			return metadata;
@@ -405,5 +384,19 @@ public class BedrockCore
 		{
 			throw;
 		}
+	}
+	/// <summary>
+	/// Retrieves the download URI for a package based on its metadata
+	/// </summary>
+	/// <returns>The resolved download URI as a string</returns>
+	/// <exception cref="BedrockCoreNoAvailbaleVersionUri">Thrown when no available URI is found for the metadata</exception>
+	public  async Task<string> GetPackageUri(BuildInfo buildInfo,Architecture devicesArch)
+	{
+		var find = buildInfo.Variations.Find((variation => variation.Arch == devicesArch));
+		if (find == null)
+			throw new BedrockCoreException($"Unable to find {devicesArch} Version");
+		if (find.MetaData.Count == 0)
+			throw new BedrockCoreNoAvailbaleVersionUri("There is no available Uri to download");
+		return await GetPackageUriInside(find.MetaData.Last());
 	}
 }

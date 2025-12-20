@@ -1,4 +1,6 @@
-﻿namespace BedrockLauncher.Core;
+﻿using System;
+
+namespace BedrockLauncher.Core;
 
 public class BedrockCoreException : Exception
 {
