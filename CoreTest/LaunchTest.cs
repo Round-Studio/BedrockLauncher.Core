@@ -13,10 +13,10 @@ public class LaunchTest
         bedrockCore.InitAsync().Wait();
         var launchOptions = new LaunchOptions()
         {
-            GameFolder = Path.GetFullPath("C:\\Users\\Administrator\\AppData\\Roaming\\RoundStudio\\BedrockBoot\\Bedrock_Data\\bedrock_versions\\1.21.120202"),
+            GameFolder = Path.GetFullPath("D:\\Windows11\\newdesk\\Code\\bedrock_versions\\1.21.11401"),
             MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
-            GameType = MinecraftGameTypeVersion.Preview,
-            LaunchArgs = "minecraft://creator/?Editor=true"
+            GameType = MinecraftGameTypeVersion.Release,
+             LaunchArgs        = null
 		};
         bedrockCore.StartGameAsync(launchOptions).Wait();
     }

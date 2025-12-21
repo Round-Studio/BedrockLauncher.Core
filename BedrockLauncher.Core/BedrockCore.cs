@@ -71,7 +71,7 @@ public class BedrockCore
 			}
 		}));
 	}
-
+	
 	/// <summary>
 	///     Get Windows Development state
 	/// </summary>
@@ -323,7 +323,7 @@ public class BedrockCore
 				{
 					TargetApplicationPackageFamilyName = packageFamily
 				};
-				if (options.LaunchArgs != null)
+				if (options?.LaunchArgs == string.Empty)
 				{
 					await Launcher.LaunchUriAsync(new Uri(options.LaunchArgs), options_st);
 				}
@@ -398,5 +398,19 @@ public class BedrockCore
 		if (find.MetaData.Count == 0)
 			throw new BedrockCoreNoAvailbaleVersionUri("There is no available Uri to download");
 		return await GetPackageUriInside(find.MetaData.Last());
+	}
+
+	public static bool CheckRuntimeDepends()
+	{
+		try
+		{
+			var installed = CheckUwp.IsUwpPackageInstalled("Microsoft.NET.Native.Runtime.2.2_8wekyb3d8bbwe");
+			var isUwpPackageInstalled = CheckUwp.IsUwpPackageInstalled("Microsoft.NET.Native.Runtime.2.2_8wekyb3d8bbwe");
+
+		}
+		catch 
+		{
+			throw;
+		}
 	}
 }
