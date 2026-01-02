@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using BedrockLauncher.Core;
 using BedrockLauncher.Core.SoureGenerate;
@@ -10,22 +11,32 @@ public class BuildDatabase
 
 	[JsonExtensionData] public Dictionary<string, object> ExtensionData { get; set; } = new();
 
-	[JsonIgnore] public Dictionary<string, BuildInfo> Builds => GetBuildsFromExtensionData();
+	[JsonIgnore] public IAsyncEnumerable<KeyValuePair<string, BuildInfo>>  Builds => GetBuildsFromExtensionData();
 
-	private Dictionary<string, BuildInfo> GetBuildsFromExtensionData()
+	private async IAsyncEnumerable<KeyValuePair<string, BuildInfo>> GetBuildsFromExtensionData()
 	{
-		var result = new Dictionary<string, BuildInfo>();
-
 		foreach (var (key, value) in ExtensionData)
+		{
 			if (value is JsonElement element && element.ValueKind == JsonValueKind.Object)
 			{
-				var buildInfo = JsonSerializer.Deserialize(
-					element.GetRawText(),
-					BuildDatabaseContext.Default.DictionaryStringBuildInfo);
-				if (buildInfo != null) result = buildInfo;
-			}
+				foreach (var jsonProperty in element.EnumerateObject())
+				{
+					var buildInfo = JsonSerializer.Deserialize(
+						jsonProperty.Value.GetRawText(),
+						BuildDatabaseContext.Default.BuildInfo);
 
-		return result;
+					if (buildInfo != null)
+					{
+						yield return new KeyValuePair<string, BuildInfo>(jsonProperty.Name, buildInfo);
+					}
+
+
+					await Task.Yield();
+				}
+
+				
+			}
+		}
 	}
 }
 

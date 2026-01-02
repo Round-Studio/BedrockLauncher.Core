@@ -25,8 +25,20 @@ public static class VersionsHelper
 		{
 			using (var client = new HttpClient())
 			{
-				var data = await client.GetStringAsync(httpAddress, cancellationToken);
-				var builds = JsonSerializer.Deserialize(data, BuildDatabaseContext.Default.BuildDatabase);
+				var response = await client.GetAsync(
+					httpAddress,
+					HttpCompletionOption.ResponseHeadersRead,
+					cancellationToken);
+
+				response.EnsureSuccessStatusCode();
+
+				await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+
+				var builds = await JsonSerializer.DeserializeAsync<BuildDatabase>(
+					stream,
+					BuildDatabaseContext.Default.BuildDatabase,
+					cancellationToken);
+
 				return builds;
 			}
 		}

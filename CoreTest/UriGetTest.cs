@@ -8,12 +8,18 @@ namespace CoreTest;
 public class UriGetTest
 {
     [TestMethod]
-    public void Test()
+    public async Task TestAsync()
     {
 	    var bedrockCore = new BedrockCore();
 	    bedrockCore.InitAsync().Wait();
 	    var	buildDatabaseAsync = VersionsHelper.GetBuildDatabaseAsync("https://data.mcappx.com/v2/bedrock.json").Result;
-	    var result = bedrockCore.GetPackageUri(buildDatabaseAsync.Builds["26.0.24"],Architecture.X64).Result;
+	    BuildInfo build = null;
+		await foreach (var kvp in buildDatabaseAsync.Builds)
+		{
+			if (kvp.Key == "1.21.131")
+				build = kvp.Value;
+		}
+		var result = bedrockCore.GetPackageUri(build,Architecture.X64).Result;
         Console.WriteLine(result);
     }
 }
