@@ -19,4 +19,8 @@ public class CoreOptions
 	///     Gets a value indicating whether MD5 checksum verification is enabled.
 	/// </summary>
 	public bool IsCheckMD5 { get; set; }
+	/// <summary>
+	/// Gets or sets a value indicating whether the input is treated as game input for auto-complete operations.
+	/// </summary>
+	public bool IsAutoCompleteGameInput { get; set; }
 }
