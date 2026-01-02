@@ -16,7 +16,7 @@ public class UriGetTest
 	    BuildInfo build = null;
 		await foreach (var kvp in buildDatabaseAsync.Builds)
 		{
-			if (kvp.Key == "1.21.131")
+			if (kvp.Key == "0.14.0")
 				build = kvp.Value;
 		}
 		var result = bedrockCore.GetPackageUri(build,Architecture.X64).Result;
