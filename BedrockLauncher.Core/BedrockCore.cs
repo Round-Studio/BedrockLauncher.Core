@@ -339,6 +339,8 @@ public class BedrockCore
 				
 			}
 			Process[] processes = Process.GetProcessesByName("Minecraft.Windows");
+			Process[] process_oldVersion = Process.GetProcessesByName("Minecraft.Win10.DX11");
+			processes = processes.Concat(process_oldVersion).ToArray();
 			process = processes.OrderBy(p => p.StartTime).Last();
 		}
 		return process;
