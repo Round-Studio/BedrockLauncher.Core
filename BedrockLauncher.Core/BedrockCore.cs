@@ -51,8 +51,7 @@ public class BedrockCore
 	/// </summary>
 	public async Task InitAsync()
 	{
-		await Task.Run((() =>
-		{
+		
 			if (Options.IsAutoOpenDevelopment)
 			{
 				if (!GetWindowsDevelopmentState())
@@ -69,9 +68,14 @@ public class BedrockCore
 					VCRuntimeHelper.CompleteVCRuntimeAsync(RuntimeInformation.OSArchitecture).Wait();
 				}
 			}
-		}));
-	}
 
+			if (Options.IsAutoCompleteGameInput)
+			{
+			 	await AutoCompleteGameInput();
+			}
+
+	}
+	
 	/// <summary>
 	///     Get Windows Development state
 	/// </summary>
@@ -239,11 +243,11 @@ public class BedrockCore
 		return null;
 	}
 	/// <summary>
-	/// Starts the Minecraft game process based on the specified launch options
+	/// Launch the Minecraft game process based on the specified launch options
 	/// </summary>
 	/// <param name="options">The launch options containing game folder, arguments, and build type</param>
 	/// <returns>The Process object representing the launched game instance</returns>
-	public async Task<Process> StartGameAsync(LaunchOptions options)
+	public async Task<Process> LaunchGameAsync(LaunchOptions options)
 	{
 		var process = new Process();
 		if (options.MinecraftBuildType == MinecraftBuildTypeVersion.GDK)
@@ -254,6 +258,7 @@ public class BedrockCore
 			info.Arguments = options.LaunchArgs;
 			info.UseShellExecute = false;
 			info.CreateNoWindow = true;
+			info.WorkingDirectory = options.GameFolder;
 			process.StartInfo = info;
 			process.Start();
 			options.Progress?.Report(LaunchState.Launched);
@@ -323,7 +328,7 @@ public class BedrockCore
 				{
 					TargetApplicationPackageFamilyName = packageFamily
 				};
-				if (options.LaunchArgs != null)
+				if (options?.LaunchArgs == string.Empty)
 				{
 					await Launcher.LaunchUriAsync(new Uri(options.LaunchArgs), options_st);
 				}
@@ -399,4 +404,21 @@ public class BedrockCore
 			throw new BedrockCoreNoAvailbaleVersionUri("There is no available Uri to download");
 		return await GetPackageUriInside(find.MetaData.Last());
 	}
+	/// <summary>
+	/// Ensures that the GameInput runtime is installed on the system, installing it if necessary.
+	/// </summary>
+	/// <remarks>This method checks for the presence of the GameInput runtime using its MSI product identifier. If
+	/// the runtime is not installed, it initiates the installation process. Callers can await the returned task to ensure
+	/// the operation completes before proceeding.</remarks>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public async Task AutoCompleteGameInput()
+	{
+		var isMsiInstalled = MsiHelper.IsMsiProductInstalledByGuid("64d0ccb1-329e-d507-0886-47e53d59ae21");
+		if (!isMsiInstalled)
+		{
+			await VCRuntimeHelper.InstallGameInput();
+		}
+		return;
+	}
+	
 }

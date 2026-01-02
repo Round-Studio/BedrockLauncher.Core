@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using BedrockLauncher.Core.UwpRegister;
 using Windows.Management.Deployment;
+using BedrockLauncher.Core.Utils;
 
 namespace BedrockLauncher.Core.DependsComplete;
 
@@ -106,34 +107,6 @@ public static class VCRuntimeHelper
 			}
 		}
 	}
-	[DllImport("msi.dll", CharSet = CharSet.Unicode)]
-	static extern Int32 MsiInstallProduct(string szPackagePath, string szCommandLine);
-
-	[DllImport("msi.dll", CharSet = CharSet.Unicode)]
-	static extern Int32 MsiConfigureProduct(string szProduct, int iInstallLevel, int eInstallState);
-
-	[DllImport("msi.dll", SetLastError = true)]
-	static extern int MsiGetProductInfo(string productCode, string property,
-		[Out] StringBuilder valueBuf, ref int len);
-
-	/// <summary>
-	/// Use Windows Installer API To Install MSI
-	/// </summary>
-	private static bool InstallUsingMsiApi(string msiPath)
-	{
-		try
-		{
-			string commandLine = "ACTION=INSTALL REBOOT=ReallySuppress UILevel=2";
-
-			int result = MsiInstallProduct(msiPath, commandLine);
-
-			return result == 0; // ERROR_SUCCESS
-		}
-		catch
-		{
-			return false;
-		}
-	}
 	public static async Task InstallGameInput()
 	{
 		try
@@ -149,7 +122,8 @@ public static class VCRuntimeHelper
 
 				var packages = await DownloadPackageAsync(VCUri.GameInputRedist);
 				var fileName = Path.GetTempFileName()+".msi";
-				 _ = InstallUsingMsiApi(fileName);
+				await File.WriteAllBytesAsync(fileName, packages);
+				 _ = MsiHelper.InstallMsiSilently(fileName);
 			}
 		}
 		catch 
