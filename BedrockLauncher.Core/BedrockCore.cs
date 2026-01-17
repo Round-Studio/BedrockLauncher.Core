@@ -242,6 +242,29 @@ public class BedrockCore
 		}
 		return null;
 	}
+	private static async Task<Process> WaitForProcessAsync(string processName, DateTime startTime, TimeSpan timeout)
+	{
+		var stopwatch = Stopwatch.StartNew();
+
+		while (stopwatch.Elapsed < timeout)
+		{
+			var processes = Process.GetProcessesByName(processName);
+
+			if (processes.Length > 0)
+			{
+				
+				return processes
+					.Where(p => p.StartTime > startTime)
+					.OrderBy(p => (p.StartTime - startTime).TotalMilliseconds)
+					.FirstOrDefault();
+			}
+
+		
+			await Task.Delay(200);
+		}
+
+		return null;
+	}
 	/// <summary>
 	/// Launch the Minecraft game process based on the specified launch options
 	/// </summary>
@@ -253,14 +276,15 @@ public class BedrockCore
 		if (options.MinecraftBuildType == MinecraftBuildTypeVersion.GDK)
 		{
 			options.Progress?.Report(LaunchState.Launching);
-			var info = new ProcessStartInfo();
-			info.FileName = Path.Combine(options.GameFolder, "Minecraft.Windows.exe");
-			info.Arguments = options.LaunchArgs;
-			info.UseShellExecute = false;
-			info.CreateNoWindow = true;
-			info.WorkingDirectory = options.GameFolder;
-			process.StartInfo = info;
-			process.Start();
+			DateTime startTimestamp = DateTime.Now;
+
+			Process.Start(new ProcessStartInfo()
+			{
+				FileName = "explorer.exe",
+				Arguments = Path.Combine(options.GameFolder, "Minecraft.Windows.exe")
+			});
+
+			 process = await WaitForProcessAsync("Minecraft.Windows", startTimestamp, TimeSpan.FromSeconds(10));
 			options.Progress?.Report(LaunchState.Launched);
 		}
 

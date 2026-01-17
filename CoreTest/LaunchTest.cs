@@ -1,6 +1,7 @@
 using BedrockLauncher.Core;
 using BedrockLauncher.Core.CoreOption;
 using BedrockLauncher.Core.DependsComplete;
+using BedrockLauncher.Core.Utils;
 
 namespace CoreTest;
 
@@ -14,12 +15,13 @@ public class LaunchTest
         bedrockCore.InitAsync().Wait();
         var launchOptions = new LaunchOptions()
         {
-            GameFolder = Path.GetFullPath("D:\\Windows11\\newdesk\\Code\\bedrock_versions\\1.21.13101"),
+            GameFolder = Path.GetFullPath(""),
             MinecraftBuildType = MinecraftBuildTypeVersion.GDK,
             GameType = MinecraftGameTypeVersion.Release,
-             LaunchArgs        = null
-		};
-        bedrockCore.LaunchGameAsync(launchOptions).Wait();
+            LaunchArgs = null
+        };
+        var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
+        //  ExeLauncher.LaunchWithLowPrivilege(@"E:\GlacieCrack\plugins\Glacie\bedrock_versions\1234\Minecraft.Windows.exe", "");
     }
     [TestMethod]
     public void MsiTest()
