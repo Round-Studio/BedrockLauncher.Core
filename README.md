@@ -107,4 +107,5 @@ We welcome Issues and Pull Requests!
 
 ## 📮 Contact Us  
 
-- GitHub: [@BedrockLauncher](https://github.com/Round-Studio/)
+- GitHub: [@Round Studio](https://github.com/Round-Studio/)
+- Docs: [BedrockLauncher.Core Docs](https://docs.roundstudio.top/docs/product/blc)
