@@ -25,6 +25,9 @@ public static class VersionsHelper
 		{
 			using (var client = new HttpClient())
 			{
+				// Add UserAgent.
+				client.DefaultRequestHeaders.UserAgent.ParseAdd("mcappx_developer");
+
 				var response = await client.GetAsync(
 					httpAddress,
 					HttpCompletionOption.ResponseHeadersRead,
