@@ -1,0 +1,42 @@
+name: .NET Core Desktop
+
+on:
+  push:
+    branches: ["2.0-main"]
+  pull_request:
+    branches: ["2.0-main"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        configuration: [Release]
+
+    runs-on: windows-latest
+
+    env:
+      PRE_MC_KEY: ${{ secrets.PRE_MC_KEY }}
+      REL_MC_KEY: ${{ secrets.REL_MC_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Launch Build
+        run: dotnet build BedrockLauncher.Core -c Release --runtime win-x64
+
+      - name: Publish BedrockLauncher.Core
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
+          PROJECT_FILE_PATH: BedrockLauncher.Core/BedrockLauncher.Core.csproj
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
