@@ -252,7 +252,6 @@ public class BedrockCore
 
 			if (processes.Length > 0)
 			{
-				
 				return processes
 					.Where(p => p.StartTime > startTime)
 					.OrderBy(p => (p.StartTime - startTime).TotalMilliseconds)
@@ -265,6 +264,17 @@ public class BedrockCore
 
 		return null;
 	}
+	private static DateTime GetStartTimeSafe(Process proc)
+	{
+		try
+		{
+			return proc.StartTime;
+		}
+		catch
+		{
+			return DateTime.MinValue;
+		}
+	}
 	/// <summary>
 	/// Launch the Minecraft game process based on the specified launch options
 	/// </summary>
@@ -276,15 +286,55 @@ public class BedrockCore
 		if (options.MinecraftBuildType == MinecraftBuildTypeVersion.GDK)
 		{
 			options.Progress?.Report(LaunchState.Launching);
-			DateTime startTimestamp = DateTime.Now;
+			string targetExe = "Minecraft.Windows.exe";
+			string fullPath = Path.Combine(options.GameFolder, targetExe);
+			string processName = Path.GetFileNameWithoutExtension(targetExe); 
 
-			Process.Start(new ProcessStartInfo()
+		
+			var beforeSnapshot = Process.GetProcessesByName(processName)
+				.ToDictionary(p => p.Id, p => GetStartTimeSafe(p));
+
+	
+			DateTime launchTime = DateTime.Now;
+			Process.Start(new ProcessStartInfo
 			{
 				FileName = "explorer.exe",
-				Arguments = Path.Combine(options.GameFolder, "Minecraft.Windows.exe")
+				Arguments = fullPath,
+				UseShellExecute = true
 			});
 
-			 process = await WaitForProcessAsync("Minecraft.Windows", startTimestamp, TimeSpan.FromSeconds(10));
+			Process minecraftProcess = null;
+
+	
+			for (int i = 0; i < 10; i++)
+			{
+				var currentProcesses = Process.GetProcessesByName(processName);
+				foreach (var proc in currentProcesses)
+				{
+
+					if (beforeSnapshot.ContainsKey(proc.Id))
+						continue;
+
+
+					DateTime startTime = GetStartTimeSafe(proc);
+					if (startTime == DateTime.MinValue)
+						continue; 
+
+					if (startTime >= launchTime.AddMilliseconds(-200))
+					{
+						minecraftProcess = proc;
+						break;
+					}
+				}
+
+				if (minecraftProcess != null)
+					break;
+
+				Thread.Sleep(500);
+				
+			}
+			process = minecraftProcess;
+
 			options.Progress?.Report(LaunchState.Launched);
 		}
 
