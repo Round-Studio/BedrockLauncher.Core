@@ -24,19 +24,19 @@ namespace CoreTest
 				}))),
 				Type = MinecraftBuildTypeVersion.UWP,
 				GameTypeVersion = MinecraftGameTypeVersion.Release,
-				InstallDstFolder = Path.GetFullPath("./Test7"),
-				GameName = "8899",
-				FileFullPath = @"D:\Windows11\Download\Microsoft.MinecraftUWP_0.140.1.0_x64__8wekyb3d8bbwe.Appx"
+				InstallDstFolder = Path.GetFullPath("./Test7829"),
+				GameName = "88991",
+				FileFullPath = @"D:\Windows11\Download\Microsoft.MinecraftUWP_1.7.100.0_x64__8wekyb3d8bbwe.Appx"
 			};
-			//bedrockCore.InstallPackageAsync(localGamePackageOptions).Wait();
-			var launchOptions = new LaunchOptions()
-			{
-				GameFolder = Path.GetFullPath("./Test7"),
-				GameType = MinecraftGameTypeVersion.Release,
-				MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
-			};
-			var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
-			Assert.IsNotNull(process);
+			bedrockCore.InstallPackageAsync(localGamePackageOptions).Wait();
+			//var launchOptions = new LaunchOptions()
+			//{
+			//	GameFolder = Path.GetFullPath("./Test78"),
+			//	GameType = MinecraftGameTypeVersion.Release,
+			//	MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
+			//};
+			//var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
+			//Assert.IsNotNull(process);
 		}
 	}
 }
