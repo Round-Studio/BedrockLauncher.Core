@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using BedrockLauncher.Core.BackGround;
+using BedrockLauncher.Core.VersionJsons;
 
 namespace BedrockLauncher.Core.Utils
 {
@@ -47,7 +48,8 @@ namespace BedrockLauncher.Core.Utils
 					XElement application = applications?.Element(ns + "Application");
 					XElement extenElement = application?.Element(ns + "Extensions");
 					XElement identElement = package?.Element(ns + "Identity");
-					identElement.SetAttributeValue("Version", TimeBasedVersion.GetVersion());
+					string version = identElement?.Attribute("Version")?.Value;
+					identElement.SetAttributeValue("Version",VersionsHelper.GetNextVersion(new Version(version)));
 					extenElement.RemoveAll();
 					application.SetAttributeValue(desktop4 + "SupportsMultipleInstances", "true");
 					XElement? xElement = application.Element(uap + "VisualElements");
