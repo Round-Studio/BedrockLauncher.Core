@@ -230,7 +230,8 @@ public class BedrockCore
 			config.PackagePath = Path.Combine(options.InstallDstFolder, "AppxManifest.xml");
 			config.CancellationToken = options.CancellationToken.GetValueOrDefault();
 			config.Timeout = new TimeSpan(0, 3, 0);
-			config.DeploymentOptions = is_installed ? DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion
+			config.DeploymentOptions = is_installed
+				? DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion
 				: DeploymentOptions.DevelopmentMode;
 			config.ProgressCallback = options.DeployProgress;
 

@@ -1,137 +1,187 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Management.Deployment;
 
-namespace BedrockLauncher.Core.UwpRegister;
-
-public class DeploymentOptionsConfig
+namespace BedrockLauncher.Core.UwpRegister
 {
-	/// <summary>
-	///     Gets or sets the file system path to the package.
-	/// </summary>
-	public string PackagePath { get; set; } = string.Empty;
+    public class DeploymentOptionsConfig
+    {
+        /// <summary>
+        ///     Gets or sets the file system path to the package.
+        /// </summary>
+        public string PackagePath { get; set; } = string.Empty;
 
-	/// <summary>
-	///     Gets or sets the options used to configure deployment behavior.
-	/// </summary>
-	public DeploymentOptions DeploymentOptions { get; set; }
+        /// <summary>
+        ///     Gets or sets the options used to configure deployment behavior.
+        /// </summary>
+        public DeploymentOptions DeploymentOptions { get; set; }
 
-	/// <summary>
-	///     Gets or sets the cancellation token that is used to observe cancellation requests for the associated operation.
-	/// </summary>
-	/// <remarks>
-	///     Assign a cancellation token to enable cooperative cancellation of the operation. If no token is
-	///     provided, the operation cannot be cancelled through this property.
-	/// </remarks>
-	public CancellationToken CancellationToken { get; set; } = default;
+        /// <summary>
+        ///     Gets or sets the cancellation token that is used to observe cancellation requests for the associated operation.
+        /// </summary>
+        /// <remarks>
+        ///     Assign a cancellation token to enable cooperative cancellation of the operation. If no token is
+        ///     provided, the operation cannot be cancelled through this property.
+        /// </remarks>
+        public CancellationToken CancellationToken { get; set; } = default;
 
-	/// <summary>
-	///     Progress callback
-	/// </summary>
-	public IProgress<DeploymentProgress>? ProgressCallback { get; set; }
+        /// <summary>
+        ///     Progress callback
+        /// </summary>
+        public IProgress<DeploymentProgress>? ProgressCallback { get; set; }
 
-	/// <summary>
-	///     Gets or sets the maximum duration to wait before the operation times out.
-	/// </summary>
-	public TimeSpan? Timeout { get; set; }
-}
+        /// <summary>
+        ///     Gets or sets the maximum duration to wait before the operation times out.
+        /// </summary>
+        public TimeSpan? Timeout { get; set; }
+    }
 
-public class UwpRegister
-{
-	/// <summary>
-	///     Registers an appx package with flexible configuration
-	/// </summary>
-	/// <param name="config">Deployment configuration options</param>
-	/// <returns>Deployment result containing operation status</returns>
-	[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
-	public static async Task<DeploymentResult> RegisterAppxAsync(DeploymentOptionsConfig config)
-	{
-		ValidateConfig(config);
-		var manager = new PackageManager();
-		var asyncOperation = manager.RegisterPackageAsync(
-			new Uri(config.PackagePath),
-			null,
-			config.DeploymentOptions | DeploymentOptions.DevelopmentMode);
+    public class UwpRegister
+    {
+        /// <summary>
+        ///     Registers an appx package with flexible configuration (no admin required)
+        /// </summary>
+        /// <param name="config">Deployment configuration options</param>
+        /// <returns>Deployment result containing operation status</returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
+        public static async Task<DeploymentResult> RegisterAppxAsync(DeploymentOptionsConfig config)
+        {
+            ValidateConfig(config);
+            
+            // 处理包路径，确保是文件夹路径
+            string packageFolderPath = config.PackagePath;
+            if (packageFolderPath.StartsWith("file://"))
+            {
+                packageFolderPath = new Uri(packageFolderPath).LocalPath;
+            }
+            
+            // 移除签名文件（如果存在）
+            RemoveSignatureFile(packageFolderPath);
+            
+            var manager = new PackageManager();
+            var asyncOperation = manager.RegisterPackageAsync(
+                new Uri(config.PackagePath),
+                null,
+                config.DeploymentOptions | DeploymentOptions.DevelopmentMode);
 
-		return await ExecuteWithTimeout(asyncOperation, config);
-	}
+            return await ExecuteWithTimeout(asyncOperation, config);
+        }
 
-	/// <summary>
-	///     Adds a framework appx package with flexible configuration
-	/// </summary>
-	/// <param name="config">Deployment configuration options</param>
-	/// <returns>Deployment result containing operation status</returns>
-	[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
-	public static async Task<DeploymentResult> AddAppxAsync(DeploymentOptionsConfig config)
-	{
-		ValidateConfig(config);
+        /// <summary>
+        ///     Adds a framework appx package with flexible configuration
+        /// </summary>
+        /// <param name="config">Deployment configuration options</param>
+        /// <returns>Deployment result containing operation status</returns>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PackageManager))]
+        public static async Task<DeploymentResult> AddAppxAsync(DeploymentOptionsConfig config)
+        {
+            ValidateConfig(config);
+            
+            // 处理包路径，确保是文件夹路径
+            string packageFolderPath = config.PackagePath;
+            if (packageFolderPath.StartsWith("file://"))
+            {
+                packageFolderPath = new Uri(packageFolderPath).LocalPath;
+            }
+            
+            // 移除签名文件（如果存在）
+            RemoveSignatureFile(packageFolderPath);
 
-		var packageManager = new PackageManager();
-		var asyncOperation = packageManager.AddPackageAsync(
-			new Uri(config.PackagePath),
-			null,
-			config.DeploymentOptions);
+            var packageManager = new PackageManager();
+            var asyncOperation = packageManager.AddPackageAsync(
+                new Uri(config.PackagePath),
+                null,
+                config.DeploymentOptions | DeploymentOptions.DevelopmentMode);
 
-		return await ExecuteWithTimeout(asyncOperation, config);
-	}
+            return await ExecuteWithTimeout(asyncOperation, config);
+        }
 
-	private static async Task<DeploymentResult> ExecuteWithTimeout(
-		IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> asyncOperation,
-		DeploymentOptionsConfig config)
-	{
-		if (config.Timeout.HasValue)
-		{
-			using var timeoutCts = new CancellationTokenSource(config.Timeout.Value);
-			using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-				config.CancellationToken, timeoutCts.Token);
+        /// <summary>
+        ///     Removes the signature file from the package folder
+        /// </summary>
+        /// <param name="packageFolderPath">Path to the unpacked package folder</param>
+        private static void RemoveSignatureFile(string packageFolderPath)
+        {
+            try
+            {
+                string signaturePath = Path.Combine(packageFolderPath, "AppxSignature.p7x");
+                if (File.Exists(signaturePath))
+                {
+                    File.Delete(signaturePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 记录错误但继续执行
+                Console.WriteLine($"Error removing signature file: {ex.Message}");
+            }
+        }
 
-			return await asyncOperation.AsTask(linkedCts.Token, config.ProgressCallback);
-		}
-		
-		return await asyncOperation.AsTask(config.CancellationToken, config.ProgressCallback);
-	}
-	public static bool CheckForPackageVersion(string packageName, string version)
-	{
-		PackageManager packageManager = new PackageManager();
+        private static async Task<DeploymentResult> ExecuteWithTimeout(
+            IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> asyncOperation,
+            DeploymentOptionsConfig config)
+        {
+            if (config.Timeout.HasValue)
+            {
+                using var timeoutCts = new CancellationTokenSource(config.Timeout.Value);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    config.CancellationToken, timeoutCts.Token);
 
-		foreach (var package in packageManager.FindPackages())
-		{
-			if (package.Id.Name == packageName)
-			{
-				var currentVersion = $"{package.Id.Version.Major}.{package.Id.Version.Minor}.{package.Id.Version.Build}.{package.Id.Version.Revision}";
+                return await asyncOperation.AsTask(linkedCts.Token, config.ProgressCallback);
+            }
+            
+            return await asyncOperation.AsTask(config.CancellationToken, config.ProgressCallback);
+        }
+        
+        public static bool CheckForPackageVersion(string packageName, string version)
+        {
+            PackageManager packageManager = new PackageManager();
 
-				if (currentVersion == version)
-				{
-					return true;
-				}
-			}
-		}
+            foreach (var package in packageManager.FindPackages())
+            {
+                if (package.Id.Name == packageName)
+                {
+                    var currentVersion = $"{package.Id.Version.Major}.{package.Id.Version.Minor}.{package.Id.Version.Build}.{package.Id.Version.Revision}";
 
-		return false;
-	}
-	public static bool IsPackageInstalled(string packageName)
-	{
-		if (string.IsNullOrWhiteSpace(packageName))
-			throw new ArgumentException("Package name cannot be null or empty", nameof(packageName));
+                    if (currentVersion == version)
+                    {
+                        return true;
+                    }
+                }
+            }
 
-		PackageManager packageManager = new PackageManager();
+            return false;
+        }
+        
+        public static bool IsPackageInstalled(string packageName)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+                throw new ArgumentException("Package name cannot be null or empty", nameof(packageName));
 
-		foreach (var package in packageManager.FindPackages())
-		{
-			if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
-			{
-				return true;
-			}
-		}
+            PackageManager packageManager = new PackageManager();
 
-		return false;
-	}
-	private static void ValidateConfig(DeploymentOptionsConfig config)
-	{
-		if (string.IsNullOrWhiteSpace(config.PackagePath))
-			throw new ArgumentException("Package path cannot be null or empty", nameof(config));
+            foreach (var package in packageManager.FindPackages())
+            {
+                if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
 
-		if (!Uri.TryCreate(config.PackagePath, UriKind.Absolute, out _))
-			throw new ArgumentException("Package path must be a valid absolute URI", nameof(config));
-	}
+            return false;
+        }
+        
+        private static void ValidateConfig(DeploymentOptionsConfig config)
+        {
+            if (string.IsNullOrWhiteSpace(config.PackagePath))
+                throw new ArgumentException("Package path cannot be null or empty", nameof(config));
+
+            if (!Uri.TryCreate(config.PackagePath, UriKind.Absolute, out _))
+                throw new ArgumentException("Package path must be a valid absolute URI", nameof(config));
+        }
+    }
 }
