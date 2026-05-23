@@ -56,7 +56,7 @@ public class BedrockCore
 			{
 				if (!GetWindowsDevelopmentState())
 				{
-					OpenWindowsDevelopment();
+					throw new BedrockCoreException("Windows Developer Mode is required for non-admin UWP loose package registration. Please enable Developer Mode in Windows settings.");
 				}
 			}
 
@@ -100,18 +100,9 @@ public class BedrockCore
 	}
 
 	/// <summary>
-	///     Enables Windows Developer Mode by modifying the system registry to allow development without a developer license.
+	///     Opens Windows Settings so the current user can enable Developer Mode without requiring this process to run elevated.
 	/// </summary>
-	/// <remarks>
-	///     Administrator privileges are required to modify the system registry. Enabling Developer Mode
-	///     allows the installation and testing of apps without a developer license. Use with caution, as modifying the
-	///     registry can affect system stability and security.
-	/// </remarks>
-	/// <returns>true if Developer Mode is successfully enabled; otherwise, false.</returns>
-	/// <exception cref="Exception">
-	///     Thrown if the operation fails to enable Developer Mode, such as due to insufficient permissions or registry access
-	///     errors.
-	/// </exception>
+	/// <returns>true if the settings page was opened; otherwise, false.</returns>
 	public bool OpenWindowsDevelopment()
 	{
 		try
@@ -162,7 +153,7 @@ public class BedrockCore
 			};
 			isHasVCwin32 = CheckVersion(registryPaths);
 			var packageManager = new PackageManager();
-			var packages = packageManager.FindPackages();
+			var packages = packageManager.FindPackagesForUser(string.Empty);
 
 			var vcRuntimePackages = packages.Where(p =>
 				p.Id.Name.Contains("Microsoft.VCLibs.140")
@@ -360,7 +351,7 @@ public class BedrockCore
 			}
 			PackageManager packageManager = new PackageManager();
 			bool twice_launch = false;
-			foreach (var package in packageManager.FindPackages())
+			foreach (var package in packageManager.FindPackagesForUser(string.Empty))
 			{
 				if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
 				{

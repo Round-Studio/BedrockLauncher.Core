@@ -16,9 +16,9 @@ public class LaunchTest
         bedrockCore.InitAsync().Wait();
         var launchOptions = new LaunchOptions()
         {
-            GameFolder = Path.GetFullPath(@"E:\test2\plugins\Glacie\bedrock_versions\1.26.2"),
-            MinecraftBuildType = MinecraftBuildTypeVersion.GDK,
-            GameType = MinecraftGameTypeVersion.Release,
+            GameFolder = Path.GetFullPath(@"D:\BedrockBoot\bedrock_versions\1.21.12020"),
+            MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
+            GameType = MinecraftGameTypeVersion.Preview,
             LaunchArgs = null
         };
         var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
