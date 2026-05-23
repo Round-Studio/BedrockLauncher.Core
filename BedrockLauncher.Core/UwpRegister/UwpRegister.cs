@@ -43,7 +43,7 @@ namespace BedrockLauncher.Core.UwpRegister
     public class UwpRegister
     {
         /// <summary>
-        ///     Registers an appx package with flexible configuration (no admin required)
+        ///     Registers an unpacked appx package for the current user in developer mode (no admin required).
         /// </summary>
         /// <param name="config">Deployment configuration options</param>
         /// <returns>Deployment result containing operation status</returns>
@@ -51,22 +51,17 @@ namespace BedrockLauncher.Core.UwpRegister
         public static async Task<DeploymentResult> RegisterAppxAsync(DeploymentOptionsConfig config)
         {
             ValidateConfig(config);
-            
-            // 处理包路径，确保是文件夹路径
-            string packageFolderPath = config.PackagePath;
-            if (packageFolderPath.StartsWith("file://"))
-            {
-                packageFolderPath = new Uri(packageFolderPath).LocalPath;
-            }
-            
-            // 移除签名文件（如果存在）
+
+            var packageUri = GetPackageUri(config.PackagePath);
+            var packageFolderPath = GetPackageFolderPath(packageUri);
+
             RemoveSignatureFile(packageFolderPath);
             
             var manager = new PackageManager();
             var asyncOperation = manager.RegisterPackageAsync(
-                new Uri(config.PackagePath),
+                packageUri,
                 null,
-                config.DeploymentOptions | DeploymentOptions.DevelopmentMode);
+                ToCurrentUserDevelopmentOptions(config.DeploymentOptions));
 
             return await ExecuteWithTimeout(asyncOperation, config);
         }
@@ -80,24 +75,42 @@ namespace BedrockLauncher.Core.UwpRegister
         public static async Task<DeploymentResult> AddAppxAsync(DeploymentOptionsConfig config)
         {
             ValidateConfig(config);
-            
-            // 处理包路径，确保是文件夹路径
-            string packageFolderPath = config.PackagePath;
-            if (packageFolderPath.StartsWith("file://"))
-            {
-                packageFolderPath = new Uri(packageFolderPath).LocalPath;
-            }
-            
-            // 移除签名文件（如果存在）
+
+            var packageUri = GetPackageUri(config.PackagePath);
+            var packageFolderPath = GetPackageFolderPath(packageUri);
+
             RemoveSignatureFile(packageFolderPath);
 
             var packageManager = new PackageManager();
             var asyncOperation = packageManager.AddPackageAsync(
-                new Uri(config.PackagePath),
+                packageUri,
                 null,
-                config.DeploymentOptions | DeploymentOptions.DevelopmentMode);
+                ToCurrentUserDevelopmentOptions(config.DeploymentOptions));
 
             return await ExecuteWithTimeout(asyncOperation, config);
+        }
+
+        private static Uri GetPackageUri(string packagePath)
+        {
+            if (Uri.TryCreate(packagePath, UriKind.Absolute, out var uri) && uri.IsFile)
+            {
+                return uri;
+            }
+
+            return new Uri(Path.GetFullPath(packagePath));
+        }
+
+        private static string GetPackageFolderPath(Uri packageUri)
+        {
+            var localPath = packageUri.LocalPath;
+            return File.Exists(localPath)
+                ? Path.GetDirectoryName(localPath) ?? localPath
+                : localPath;
+        }
+
+        private static DeploymentOptions ToCurrentUserDevelopmentOptions(DeploymentOptions options)
+        {
+            return options | DeploymentOptions.DevelopmentMode;
         }
 
         /// <summary>
@@ -141,7 +154,7 @@ namespace BedrockLauncher.Core.UwpRegister
         {
             PackageManager packageManager = new PackageManager();
 
-            foreach (var package in packageManager.FindPackages())
+            foreach (var package in packageManager.FindPackagesForUser(string.Empty))
             {
                 if (package.Id.Name == packageName)
                 {
@@ -164,7 +177,7 @@ namespace BedrockLauncher.Core.UwpRegister
 
             PackageManager packageManager = new PackageManager();
 
-            foreach (var package in packageManager.FindPackages())
+            foreach (var package in packageManager.FindPackagesForUser(string.Empty))
             {
                 if (package.Id.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -180,8 +193,11 @@ namespace BedrockLauncher.Core.UwpRegister
             if (string.IsNullOrWhiteSpace(config.PackagePath))
                 throw new ArgumentException("Package path cannot be null or empty", nameof(config));
 
-            if (!Uri.TryCreate(config.PackagePath, UriKind.Absolute, out _))
-                throw new ArgumentException("Package path must be a valid absolute URI", nameof(config));
+            if (Uri.TryCreate(config.PackagePath, UriKind.Absolute, out var uri) && uri.IsFile)
+                return;
+
+            if (!Path.IsPathFullyQualified(config.PackagePath))
+                throw new ArgumentException("Package path must be an absolute file path or file URI", nameof(config));
         }
     }
 }
