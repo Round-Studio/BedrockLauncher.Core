@@ -12,10 +12,10 @@ namespace TestProject
             bedrockCore.InitAsync().Wait();
             var launchOptions = new LaunchOptions()
             {
-                GameFolder = Path.GetFullPath(@"E:\Bedrock\bedrock_versions\1.21.11401"),
-                MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
+                GameFolder = "D:\\BedrockBoot\\bedrock_versions\\1.21.11401",
                 GameType = MinecraftGameTypeVersion.Release,
-                LaunchArgs = null
+                MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
+                LaunchArgs = "minecraft://creator/?Editor=true"
             };
             var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
             Console.WriteLine(process.Id);
