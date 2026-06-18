@@ -267,6 +267,7 @@ public class BedrockCore
 			return DateTime.MinValue;
 		}
 	}
+
 	/// <summary>
 	/// Launch the Minecraft game process based on the specified launch options
 	/// </summary>
@@ -280,24 +281,24 @@ public class BedrockCore
 			options.Progress?.Report(LaunchState.Launching);
 			string targetExe = "Minecraft.Windows.exe";
 			string fullPath = Path.Combine(options.GameFolder, targetExe);
-			string processName = Path.GetFileNameWithoutExtension(targetExe); 
+			string processName = Path.GetFileNameWithoutExtension(targetExe);
 
-		
 			var beforeSnapshot = Process.GetProcessesByName(processName)
 				.ToDictionary(p => p.Id, p => GetStartTimeSafe(p));
 
-	
 			DateTime launchTime = DateTime.Now;
 			Process.Start(new ProcessStartInfo
 			{
-				FileName = "explorer.exe",
-				Arguments = fullPath,
-				UseShellExecute = true
+				FileName = "cmd.exe",
+				ArgumentList =
+					{ "/c", "start", fullPath, string.IsNullOrEmpty(options.LaunchArgs) ? "" : options.LaunchArgs },
+				UseShellExecute = false,
+				CreateNoWindow = true
 			});
 
 			Process minecraftProcess = null;
 
-	
+
 			for (int i = 0; i < 10; i++)
 			{
 				var currentProcesses = Process.GetProcessesByName(processName);
@@ -310,7 +311,7 @@ public class BedrockCore
 
 					DateTime startTime = GetStartTimeSafe(proc);
 					if (startTime == DateTime.MinValue)
-						continue; 
+						continue;
 
 					if (startTime >= launchTime.AddMilliseconds(-200))
 					{
@@ -323,8 +324,9 @@ public class BedrockCore
 					break;
 
 				Thread.Sleep(500);
-				
+
 			}
+
 			process = minecraftProcess;
 
 			options.Progress?.Report(LaunchState.Launched);
@@ -345,10 +347,12 @@ public class BedrockCore
 				MinecraftGameTypeVersion.Release => "Microsoft.MinecraftUWP",
 				MinecraftGameTypeVersion.Preview => "Microsoft.MinecraftWindowsBeta"
 			};
+
 			if (!File.Exists(manifest))
 			{
 				throw new IOException("File doesn't exist");
 			}
+
 			PackageManager packageManager = new PackageManager();
 			bool twice_launch = false;
 			foreach (var package in packageManager.FindPackagesForUser(string.Empty))
@@ -361,6 +365,7 @@ public class BedrockCore
 					}
 				}
 			}
+
 			bool is_installed = UwpRegister.UwpRegister.IsPackageInstalled(packageName);
 			var config = new DeploymentOptionsConfig();
 			options.Progress?.Report(LaunchState.Registering);
@@ -370,6 +375,7 @@ public class BedrockCore
 				? DeploymentOptions.DevelopmentMode | DeploymentOptions.ForceUpdateFromAnyVersion
 				: DeploymentOptions.DevelopmentMode;
 			config.ProgressCallback = options.RegisterProgress;
+
 			if (!twice_launch && is_installed || !is_installed)
 			{
 				var appxAsync = await UwpRegister.UwpRegister.RegisterAppxAsync(config);
@@ -385,7 +391,7 @@ public class BedrockCore
 				var appDiagnosticInfos = AppDiagnosticInfo.RequestInfoForPackageAsync(packageFamily).AsTask().Result;
 				if (appDiagnosticInfos.Count != 0)
 				{
-					 await appDiagnosticInfos[0].LaunchAsync();
+					await appDiagnosticInfos[0].LaunchAsync();
 				}
 			}
 			else
@@ -394,23 +400,78 @@ public class BedrockCore
 				{
 					TargetApplicationPackageFamilyName = packageFamily
 				};
-				if (options?.LaunchArgs == string.Empty)
+
+				// 构建启动 URI
+				string uriString = "minecraft://launch";
+
+				if (!string.IsNullOrEmpty(options?.LaunchArgs))
 				{
-					await Launcher.LaunchUriAsync(new Uri(options.LaunchArgs), options_st);
+					string queryString = string.Empty;
+					string launchArgs = options.LaunchArgs;
+
+					if (launchArgs.StartsWith("minecraft://", StringComparison.OrdinalIgnoreCase))
+					{
+						int questionMarkIndex = launchArgs.IndexOf('?');
+						if (questionMarkIndex >= 0 && questionMarkIndex < launchArgs.Length - 1)
+						{
+							queryString = launchArgs.Substring(questionMarkIndex + 1);
+						}
+						else
+						{
+							string path = launchArgs.Substring("minecraft://".Length).TrimStart('/');
+							if (!string.IsNullOrEmpty(path))
+							{
+								queryString = $"{path}=true";
+							}
+						}
+					}
+					else
+					{
+						// 如果传入的不是 minecraft:// 格式，直接作为参数
+						// 检查是否已经是 key=value 格式
+						if (launchArgs.Contains('=') && !launchArgs.Contains(' '))
+						{
+							queryString = launchArgs;
+						}
+						else if (launchArgs.Contains('=') && launchArgs.Contains(' '))
+						{
+							var pairs = launchArgs.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+								.Where(arg => arg.Contains('='))
+								.Select(arg => arg.Trim())
+								.ToArray();
+							if (pairs.Length > 0)
+							{
+								queryString = string.Join("&", pairs);
+							}
+							else
+							{
+								queryString = $"args={Uri.EscapeDataString(launchArgs)}";
+							}
+						}
+						else
+						{
+							queryString = $"args={Uri.EscapeDataString(launchArgs)}";
+						}
+					}
+
+					if (!string.IsNullOrEmpty(queryString))
+					{
+						uriString = $"minecraft://launch?{queryString}";
+					}
 				}
-				else
-				{
-					await Launcher.LaunchUriAsync(new Uri("minecraft://launch"), options_st);
-				}
-				
+
+				await Launcher.LaunchUriAsync(new Uri(uriString), options_st);
 			}
+
 			Process[] processes = Process.GetProcessesByName("Minecraft.Windows");
 			Process[] process_oldVersion = Process.GetProcessesByName("Minecraft.Win10.DX11");
 			processes = processes.Concat(process_oldVersion).ToArray();
 			process = processes.OrderBy(p => p.StartTime).Last();
 		}
+
 		return process;
 	}
+
 	/// <summary>
 	/// Remove Uwp Minecraft Game
 	/// </summary>
