@@ -2,19 +2,58 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using CryptAes = System.Security.Cryptography.Aes;
+using SysCrypt = System.Security.Cryptography;
 
 namespace BedrockLauncher.Core.GdkDecode;
 
-public class MsiXVDDecoder
+public class MsiXVDDecoder : IDisposable
 {
 	public KeySinagl d;
 	public KeySinagl t;
+	private readonly bool _useHardware;
+	private readonly CryptAes? _swAesD;
+	private readonly CryptAes? _swAesT;
 
-	public MsiXVDDecoder(CikKey key)
+	public MsiXVDDecoder(CikKey key) : this(key, true)
 	{
-		d.Init(key.DKey,true);
-		t.Init(key.TKey,false);
 	}
+
+	public MsiXVDDecoder(CikKey key, bool useHardware)
+	{
+		_useHardware = useHardware;
+		if (useHardware)
+		{
+			d.Init(key.DKey, true);
+			t.Init(key.TKey, false);
+			_swAesD = null;
+			_swAesT = null;
+		}
+		else
+		{
+			_swAesD = CryptAes.Create();
+			_swAesD.KeySize = 128;
+			_swAesD.Key = key.DKey;
+			_swAesD.Mode = SysCrypt.CipherMode.ECB;
+			_swAesD.Padding = SysCrypt.PaddingMode.None;
+
+			_swAesT = CryptAes.Create();
+			_swAesT.KeySize = 128;
+			_swAesT.Key = key.TKey;
+			_swAesT.Mode = SysCrypt.CipherMode.ECB;
+			_swAesT.Padding = SysCrypt.PaddingMode.None;
+		}
+	}
+
+	public int Decrypt(ReadOnlySpan<byte> input, Span<byte> output, ReadOnlySpan<byte> tweakIv)
+	{
+		if (_useHardware)
+			return DecryptHardware(input, output, tweakIv);
+		else
+			return DecryptSoftware(input, output, tweakIv);
+	}
+
+	#region Hardware Decode (AES-NI / SSE2)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Vector128<byte> Gf128Mul(Vector128<byte> iv, Vector128<byte> mask)
@@ -26,7 +65,7 @@ public class MsiXVDDecoder
 		return Sse2.Xor(tmp1, tmp2);
 	}
 
-	public int Decrypt(ReadOnlySpan<byte> input, Span<byte> output, ReadOnlySpan<byte> tweakIv)
+	private int DecryptHardware(ReadOnlySpan<byte> input, Span<byte> output, ReadOnlySpan<byte> tweakIv)
 	{
 		if (tweakIv.Length < 16)
 			return 0;
@@ -134,10 +173,10 @@ public class MsiXVDDecoder
 
 		return length;
 	}
-	
-	
+
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public  void DecryptBlocks8(
+	public void DecryptBlocks8(
 		Vector128<byte> in0,
 		Vector128<byte> in1,
 		Vector128<byte> in2,
@@ -268,4 +307,108 @@ public class MsiXVDDecoder
 		out7 = Aes.DecryptLast(b7, key);
 	}
 
+	#endregion
+
+	#region Software Decode (managed AES)
+
+	private int DecryptSoftware(ReadOnlySpan<byte> input, Span<byte> output, ReadOnlySpan<byte> tweakIv)
+	{
+		if (tweakIv.Length < 16)
+			return 0;
+
+		int length = Math.Min(input.Length, output.Length);
+		if (length == 0)
+			return 0;
+
+		int remainingBlocks = length >> 4;
+		int leftover = length & 0xF;
+
+		if (leftover != 0)
+			remainingBlocks--;
+
+		if (remainingBlocks <= 0 && leftover == 0)
+			return 0;
+
+		byte[] tweak = new byte[16];
+		_swAesT!.EncryptEcb(tweakIv[..16], tweak, SysCrypt.PaddingMode.None);
+
+		Span<byte> tempIn = stackalloc byte[16];
+		Span<byte> tempOut = stackalloc byte[16];
+		int offset = 0;
+
+		while (remainingBlocks > 0)
+		{
+			XorBytes(input.Slice(offset, 16), tweak, tempIn);
+			_swAesD.DecryptEcb(tempIn, tempOut, SysCrypt.PaddingMode.None);
+			XorBytes(tempOut, tweak, output.Slice(offset, 16));
+			Gf128MulSoftware(tweak);
+			offset += 16;
+			remainingBlocks--;
+		}
+
+		if (leftover != 0)
+		{
+			byte[] finalTweak = tweak[..]; // copy: finalTweak = Gf128Mul(tweak)
+			Gf128MulSoftware(finalTweak);
+
+			XorBytes(input.Slice(offset, 16), finalTweak, tempIn);
+			_swAesD.DecryptEcb(tempIn, tempOut, SysCrypt.PaddingMode.None);
+			XorBytes(tempOut, finalTweak, output.Slice(offset, 16));
+
+			Span<byte> currentOut = output.Slice(offset, 16);
+			ReadOnlySpan<byte> nextIn = input.Slice(offset + 16, leftover);
+			Span<byte> nextOut = output.Slice(offset + 16, leftover);
+
+			Span<byte> temp = stackalloc byte[16];
+
+			for (int i = 0; i < leftover; i++)
+			{
+				nextOut[i] = currentOut[i];
+				temp[i] = nextIn[i];
+			}
+
+			for (int i = leftover; i < 16; i++)
+			{
+				temp[i] = currentOut[i];
+			}
+
+			XorBytes(temp, tweak, tempIn);
+			_swAesD.DecryptEcb(tempIn, tempOut, SysCrypt.PaddingMode.None);
+			XorBytes(tempOut, tweak, output.Slice(offset, 16));
+		}
+
+		return length;
+	}
+
+	private static void XorBytes(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b, Span<byte> result)
+	{
+		for (int i = 0; i < 16; i++)
+			result[i] = (byte)(a[i] ^ b[i]);
+	}
+
+	private static void Gf128MulSoftware(Span<byte> iv)
+	{
+		int carryBit127 = (iv[15] >> 7) & 1;
+		int carryBit63 = (iv[7] >> 7) & 1;
+
+		for (int i = 7; i > 0; i--)
+			iv[i] = (byte)((iv[i] << 1) | (iv[i - 1] >> 7));
+		iv[0] <<= 1;
+
+		for (int i = 15; i > 8; i--)
+			iv[i] = (byte)((iv[i] << 1) | (iv[i - 1] >> 7));
+		iv[8] <<= 1;
+
+		if (carryBit63 != 0) iv[8] ^= 0x01;
+		if (carryBit127 != 0) iv[0] ^= 0x87;
+	}
+
+	#endregion
+
+	public void Dispose()
+	{
+		_swAesD?.Dispose();
+		_swAesT?.Dispose();
+		GC.SuppressFinalize(this);
+	}
 }
