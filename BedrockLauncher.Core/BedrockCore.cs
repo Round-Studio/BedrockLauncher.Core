@@ -189,7 +189,7 @@ public class BedrockCore
 					MinecraftGameTypeVersion.Beta => _DEFINE_REF2.pre,
 					_=>null
 				});
-				var msiXvdDecoder = new MsiXVDDecoder(cik);
+				var msiXvdDecoder = new MsiXVDDecoder(cik, options.UseHardwareDecode);
 				var msiXvdStream = new MsiXVDStream(options.FileFullPath);
 				msiXvdStream.Parse();
 				options.InstallStates?.Report(InstallStates.Extracting);

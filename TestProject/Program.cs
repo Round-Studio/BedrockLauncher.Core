@@ -1,6 +1,7 @@
 ﻿using BedrockLauncher.Core;
 using BedrockLauncher.Core.CoreOption;
-using System.Diagnostics;
+using Windows.Management.Deployment;
+using BedrockLauncher.Core.Utils;
 
 namespace TestProject
 {
@@ -10,15 +11,23 @@ namespace TestProject
         {
             var bedrockCore = new BedrockCore();
             bedrockCore.InitAsync().Wait();
-            var launchOptions = new LaunchOptions()
+
+            bedrockCore.InstallPackageAsync(new LocalGamePackageOptions()
             {
-                GameFolder = "D:\\BedrockBoot\\bedrock_versions\\1.21.11401",
-                GameType = MinecraftGameTypeVersion.Release,
-                MinecraftBuildType = MinecraftBuildTypeVersion.UWP,
-                LaunchArgs = "minecraft://creator/?Editor=true"
-            };
-            var process = bedrockCore.LaunchGameAsync(launchOptions).Result;
-            Console.WriteLine(process.Id);
+                FileFullPath = @"D:\BedrockBoot\version_save\1.26.2.insPack",
+                Type = MinecraftBuildTypeVersion.GDK,
+                GameTypeVersion = MinecraftGameTypeVersion.Release,
+                InstallDstFolder = Path.GetFullPath(@"E:\GDK_TestInstall\1.26_2"),
+                UseHardwareDecode = false,
+                DeployProgress = new Progress<DeploymentProgress>(p =>
+                    Console.WriteLine($"Deploy: {p.percentage}%")),
+                ExtractionProgress = new Progress<DecompressProgress>(p =>
+                    Console.WriteLine($"Extract: [{p.CurrentCount}/{p.TotalCount}] {p.FileName}")),
+                InstallStates = new Progress<InstallStates>(s =>
+                    Console.WriteLine($"State: {s}")),
+            }).Wait();
+
+            Console.WriteLine("Install done.");
         }
     }
 }
