@@ -60,6 +60,13 @@ namespace BedrockLauncher.Core.CoreOption
 		/// Title Name only being used When it is in Uwp mode
 		/// </summary>
 		public string? GameName;
+
+		/// <summary>
+		/// Gets or sets whether to use hardware-accelerated AES-NI/SSE2 decoding for GDK packages.
+		/// Set to false to use software-based AES decryption (compatible with CPUs lacking AES-NI support).
+		/// Default is true (hardware decode).
+		/// </summary>
+		public bool UseHardwareDecode { get; set; } = true;
 	}
 
 	/// <summary>
