@@ -287,11 +287,12 @@ public class BedrockCore
 				.ToDictionary(p => p.Id, p => GetStartTimeSafe(p));
 
 			DateTime launchTime = DateTime.Now;
+			string cmdLine = $"/c start \"\" \"{fullPath}\" {options.LaunchArgs}";
+
 			Process.Start(new ProcessStartInfo
 			{
 				FileName = "cmd.exe",
-				ArgumentList =
-					{ "/c", "start", $"\"{fullPath}\"", string.IsNullOrEmpty(options.LaunchArgs) ? "" : options.LaunchArgs },
+				Arguments = cmdLine,
 				UseShellExecute = false,
 				CreateNoWindow = true
 			});

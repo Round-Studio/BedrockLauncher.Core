@@ -12,7 +12,7 @@ namespace TestProject
             var bedrockCore = new BedrockCore();
             bedrockCore.InitAsync().Wait();
 
-            bedrockCore.InstallPackageAsync(new LocalGamePackageOptions()
+            /*bedrockCore.InstallPackageAsync(new LocalGamePackageOptions()
             {
                 FileFullPath = @"D:\BedrockBoot\version_save\1.26.2.insPack",
                 Type = MinecraftBuildTypeVersion.GDK,
@@ -25,8 +25,14 @@ namespace TestProject
                     Console.WriteLine($"Extract: [{p.CurrentCount}/{p.TotalCount}] {p.FileName}")),
                 InstallStates = new Progress<InstallStates>(s =>
                     Console.WriteLine($"State: {s}")),
-            }).Wait();
+            }).Wait();*/
 
+            bedrockCore.LaunchGameAsync(new()
+            {
+                MinecraftBuildType = MinecraftBuildTypeVersion.GDK,
+                GameFolder = "E:\\Bedrock Test\\bedrock_versions\\1.26.3202",
+                GameType = MinecraftGameTypeVersion.Release
+            });
             Console.WriteLine("Install done.");
         }
     }
