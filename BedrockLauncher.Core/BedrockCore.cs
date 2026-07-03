@@ -291,7 +291,7 @@ public class BedrockCore
 			{
 				FileName = "cmd.exe",
 				ArgumentList =
-					{ "/c", "start", fullPath, string.IsNullOrEmpty(options.LaunchArgs) ? "" : options.LaunchArgs },
+					{ "/c", "start", $"\"{fullPath}\"", string.IsNullOrEmpty(options.LaunchArgs) ? "" : options.LaunchArgs },
 				UseShellExecute = false,
 				CreateNoWindow = true
 			});
