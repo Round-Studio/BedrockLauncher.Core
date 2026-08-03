@@ -44,6 +44,8 @@ public class BuildDatabase
 
 public class BuildInfo
 {
+	public string Key { get; set; } = string.Empty;
+	
 	[JsonPropertyName("Type")]
 	[JsonConverter(typeof(MinecraftGameTypeVersionConverter))]
 	public MinecraftGameTypeVersion Type { get; set; }
