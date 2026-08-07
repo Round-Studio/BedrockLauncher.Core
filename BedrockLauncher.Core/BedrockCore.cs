@@ -281,54 +281,16 @@ public class BedrockCore
 			options.Progress?.Report(LaunchState.Launching);
 			string targetExe = "Minecraft.Windows.exe";
 			string fullPath = Path.Combine(options.GameFolder, targetExe);
-			string processName = Path.GetFileNameWithoutExtension(targetExe);
-
-			var beforeSnapshot = Process.GetProcessesByName(processName)
-				.ToDictionary(p => p.Id, p => GetStartTimeSafe(p));
-
-			DateTime launchTime = DateTime.Now;
-			string cmdLine = $"/c start \"\" \"{fullPath}\" {options.LaunchArgs}";
-
-			Process.Start(new ProcessStartInfo
+			var psi = new ProcessStartInfo
 			{
-				FileName = "cmd.exe",
-				Arguments = cmdLine,
-				UseShellExecute = false,
-				CreateNoWindow = true
-			});
-
-			Process minecraftProcess = null;
-
-
-			for (int i = 0; i < 10; i++)
-			{
-				var currentProcesses = Process.GetProcessesByName(processName);
-				foreach (var proc in currentProcesses)
-				{
-
-					if (beforeSnapshot.ContainsKey(proc.Id))
-						continue;
-
-
-					DateTime startTime = GetStartTimeSafe(proc);
-					if (startTime == DateTime.MinValue)
-						continue;
-
-					if (startTime >= launchTime.AddMilliseconds(-200))
-					{
-						minecraftProcess = proc;
-						break;
-					}
-				}
-
-				if (minecraftProcess != null)
-					break;
-
-				Thread.Sleep(500);
-
-			}
-
-			process = minecraftProcess;
+				FileName = fullPath,
+				Arguments = options.LaunchArgs,
+				WorkingDirectory = options.GameFolder,
+				UseShellExecute = true,
+				CreateNoWindow = false,
+				Verb = options.RunAsAdministrator ? "runas" : string.Empty
+			};
+			process = Process.Start(psi);
 
 			options.Progress?.Report(LaunchState.Launched);
 		}

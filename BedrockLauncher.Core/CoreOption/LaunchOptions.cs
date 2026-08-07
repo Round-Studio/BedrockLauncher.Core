@@ -48,6 +48,11 @@ namespace BedrockLauncher.Core.CoreOption
 		/// Launching for old version
 		/// </summary>
 		public bool Old_VersionLaunching = false;
+		
+		/// <summary>
+		/// Run the game as administrator (only GDK)
+		/// </summary>
+		public bool RunAsAdministrator = false;
 	}
 
 	/// <summary>

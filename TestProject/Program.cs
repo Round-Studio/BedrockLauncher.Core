@@ -7,7 +7,7 @@ namespace TestProject
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var bedrockCore = new BedrockCore();
             bedrockCore.InitAsync().Wait();
@@ -27,11 +27,13 @@ namespace TestProject
                     Console.WriteLine($"State: {s}")),
             }).Wait();*/
 
-            bedrockCore.LaunchGameAsync(new()
+            var proc = await bedrockCore.LaunchGameAsync(new()
             {
                 MinecraftBuildType = MinecraftBuildTypeVersion.GDK,
-                GameFolder = "E:\\Bedrock Test\\bedrock_versions\\1.26.3202",
-                GameType = MinecraftGameTypeVersion.Release
+                GameFolder = "D:\\BedrockBoot\\bedrock_versions\\1.26.2",
+                GameType = MinecraftGameTypeVersion.Release,
+                LaunchArgs = "minecraft://creator/?Editor=true",
+                RunAsAdministrator = true
             });
             Console.WriteLine("Install done.");
         }
