@@ -11,7 +11,7 @@ A Minecraft Bedrock Launch Core
 
 📦 Install the core library via NuGet: [BedrockLauncher.Core](https://www.nuget.org/packages/BedrockLauncher.Core/)  
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)  
+![License](https://img.shields.io/badge/license-GPL-blue.svg)  
 [![.NET](https://img.shields.io/badge/.NET-10.0%2B-orange)](https://dotnet.microsoft.com/download)  
 
 ---
